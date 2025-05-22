@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Roll War - 8bit AI Demo</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #131313;
+      color: #fff;
+      font-family: monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #game-wrapper {
+      border: 6px solid #444;
+      padding: 12px;
+      background: #111 url(bg.jpg) no-repeat center center;
+      background-size: cover;
+      width: 720px;
+      height: 1280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px #000;
+      position: relative;
+    }
+    #game {
+      image-rendering: pixelated;
+      /* width: 720px; */
+      /* height: 1280px; */
+      display: block;
+      margin: 0 auto;
+    }
+    #hud {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 14px;
+      position: relative;
+    }
+    #gold-display {
+      position: absolute;
+      top: 200px;
+      right: 0;
+    }
+    #controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 12px;
+      gap: 8px;
+      flex-wrap: wrap;
+      position: relative;
+      top: 320px;
+    }
+    #top-right-buttons {
+      position: absolute;
+      top: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #top-right-buttons button {
+      font-size: 18px;
+      padding: 8px 16px;
+      background: #444;
+      border: 2px solid #888;
+      color: white;
+      cursor: pointer;
+    }
+    #top-right-buttons button:hover {
+      background: #666;
+    }
+    button {
+      font-size: 30px;
+      padding: 0 8px;
+      background: #444;
+      border: 1px solid #888;
+      color: white;
+      cursor: pointer;
+      height: 60px;
+      line-height: 60px;
+      box-sizing: border-box;
+    }
+    button:hover {
+      background: #666;
+    }
+    #challenge-btn {
+      display: none;
+      font-size: 36px;
+      padding: 32px 64px;
+      background: #e53935;
+      color: #fff;
+      border: 4px solid #fff;
+      border-radius: 16px;
+      font-weight: bold;
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      box-shadow: 0 0 40px #e53935;
+      height: calc(50px + 64px + 64px); /* 原padding上下32+32,再加50px */
+    }
+  </style>
+</head>
+<body><div id="gem10-modal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);padding:20px 40px;border-radius:10px;border:2px solid #4CAF50;color:white;font-size:24px;z-index:1000;text-align:center;">
+  <img src="jn.png" style="display:block;margin:0 auto 20px auto;width:60px;height:60px;">
+  <div>获得大范围雷电伤害</div>
+</div>
+<div id="game-wrapper">
+  <div id="top-right-buttons">
+    <button onclick="toggleSound()">音乐</button>
+  </div>
+  <canvas id="game" width="210" height="382"></canvas>
+  <img id="dice-img" style="display:none; position:absolute; left:50%; top:50%; transform:translate(-50%, 100px); width:48px; height:48px; z-index:2000;">
+  <div id="ad-tip" style="display:none; position:absolute; left:50%; top:50%; transform:translate(-50%, 200px); font-size:30px; color:#e72931; font-weight:bold; z-index:2000; text-align:center;">
+    找个广告看看
+    <div style="margin:0px auto 0 auto; width:120px; height:60px; background:#111; border-radius:2px;"></div>
+  </div>
+  <div id="hud">
+    <div id="gold-display">
+      <div><img src="gold.png" style="width: 30px; height: 30px; vertical-align: middle;"> 金币: <span id="gold">1000</span></div>
+      <div style="margin-top: 20px;"><img src="dz.png" style="width: 30px; height: 30px; vertical-align: middle;"> 波数: <span id="wave">1/5</span></div>
+    </div>
+  </div>
+  <div id="controls">
+    <button onclick="rollDice('normal')">普通骰子（100）</button>
+    <button onclick="rollDice('elite')">精英骰子（150）</button>
+    <button onclick="rollDice('universal')">万能骰子（300）</button>
+  </div>
+</div>
+
+<!-- 胜利弹窗 -->
+<div id="victory-modal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);z-index:100;justify-content:center;align-items:center;">
+  <div style="background:#222;padding:40px 60px;border-radius:20px;box-shadow:0 0 30px #000;text-align:center;">
+    <h1 style="color:#FFD700;margin:0 0 20px 0;">胜利！</h1>
+    <p style="color:#fff;font-size:20px;">所有怪物已被消灭</p>
+  </div>
+</div>
+
+<button id="challenge-btn" style="display:none;" onclick="challengeBoss()">CHALLENGE BOSS</button>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const goldEl = document.getElementById('gold');
+const waveEl = document.getElementById('wave');
+
+const grid = [
+  ['GO', 'GEM5', 'GEM10', 'HOUSE'],
+  ['GEM10', 'MONSTER', 'MONSTER', 'GEM5'],
+  ['RED', 'MONSTER', 'MONSTER', 'GEM10'],
+  ['GENIE', 'MONSTER', 'MONSTER', 'GEM5'],
+  ['GO', 'GEM5', 'GEM10', 'HOUSE']
+];
+
+const tileSize = { w: 48, h: 43 };
+const tileGap = 6;
+const boardW = tileSize.w * grid[0].length + tileGap * (grid[0].length - 1);
+const boardH = tileSize.h * grid.length + tileGap * (grid.length - 1);
+const boardOffset = { x: 0, y: (382 - boardH) / 2 + 50 };
+let player = { x: 0, y: 0 };
+let gold = 1000;
+let aiMode = true;
+let soundEnabled = true;
+let wave = 1;
+const towers = [];
+let lastRoll = null;
+let rollDisplayTimeout = null;
+let bossMode = false;
+let monsters = [];
+let bullets = [];
+let upgradeTipTimer = null;
+let showUpgradeTip = false;
+let adTipTimer = null;
+let showAdTip = false;
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+const colors = {
+  'GO': '#FFD700', 'RED': '#B22222', 'GEM5': '#9932CC', 'GEM10': '#8A2BE2', 'GEM15': '#9400D3',
+  'HOUSE': '#708090', 'HOUSE_B': '#4682B4', 'GENIE': '#800080', 'MONSTER': '#556B2F', 'PLAYER': '#FF4500'
+};
+
+const tileImages = {};
+const tileTypes = ['go', 'gem5', 'gem10', 'gem15', 'red', 'house', 'genie', 'monster'];
+tileTypes.forEach(type => {
+  const img = new Image();
+  img.src = type + '.png';
+  tileImages[type.toUpperCase()] = img;
+});
+
+function updateChallengeButton() {
+  const btn = document.getElementById('challenge-btn');
+  if (gold < 100) {
+    btn.style.display = 'block';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+function drawGrid() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!bossMode) {
+    // 正常模式下绘制格子、玩家、塔等
+    for (let y = 0; y < grid.length; y++) {
+      for (let x = 0; x < grid[0].length; x++) {
+        const type = grid[y][x];
+        const img = tileImages[type];
+        const px = boardOffset.x + x * (tileSize.w + tileGap);
+        const py = boardOffset.y + y * (tileSize.h + tileGap);
+        if (img && img.complete) {
+          ctx.drawImage(img, px, py, tileSize.w, tileSize.h);
+        } else {
+          ctx.fillStyle = colors[type] || '#333';
+          ctx.fillRect(px, py, tileSize.w, tileSize.h);
+        }
+        if (player.x === x && player.y === y) {
+          ctx.fillStyle = '#FF0';
+          ctx.fillRect(px + 16, py + 16, 16, 16);
+        }
+      }
+    }
+    towers.forEach(t => {
+      let color = '#fff';
+      if (t.level === 2) color = '#2196f3'; // 蓝色
+      if (t.level === 3) color = '#9c27b0'; // 紫色
+      if (t.level >= 4) color = '#FFD700'; // 金色
+      const px = boardOffset.x + t.x * (tileSize.w + tileGap);
+      const py = boardOffset.y + t.y * (tileSize.h + tileGap);
+      ctx.fillStyle = color;
+      ctx.fillRect(px + 12, py + 12, 24, 24);
+      // 绘制等级数字
+      ctx.fillStyle = '#222';
+      ctx.font = 'bold 18px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(t.level, px + 24, py + 24);
+    });
+  }
+  // BOSS模式下绘制所有已生成的炮台、子弹和小怪
+  if (bossMode) {
+    // 炮台
+    towers.forEach(t => {
+      let color = '#fff';
+      if (t.level === 2) color = '#2196f3'; // 蓝色
+      if (t.level === 3) color = '#9c27b0'; // 紫色
+      if (t.level >= 4) color = '#FFD700'; // 金色
+      const px = boardOffset.x + t.x * (tileSize.w + tileGap);
+      const py = boardOffset.y + t.y * (tileSize.h + tileGap);
+      ctx.fillStyle = color;
+      ctx.fillRect(px + 12, py + 12, 24, 24);
+    });
+    // 子弹
+    bullets.forEach(b => {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = '#fff';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.closePath();
+    });
+    // 小怪
+    monsters.forEach(m => {
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, 12, 0, Math.PI * 2);
+      ctx.fillStyle = '#4caf50';
+      ctx.fill();
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.closePath();
+      // 眼睛
+      ctx.beginPath();
+      ctx.arc(m.x - 4, m.y - 2, 1.5, 0, Math.PI * 2);
+      ctx.arc(m.x + 4, m.y - 2, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.closePath();
+      ctx.beginPath();
+      ctx.arc(m.x - 4, m.y - 2, 0.6, 0, Math.PI * 2);
+      ctx.arc(m.x + 4, m.y - 2, 0.6, 0, Math.PI * 2);
+      ctx.fillStyle = '#222';
+      ctx.fill();
+      ctx.closePath();
+    });
+  }
+  if (showUpgradeTip) {
+    ctx.save();
+    ctx.font = '30px bold';
+    ctx.fillStyle = '#2196f3';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('角色升级', canvas.width / 2, canvas.height / 2 - 60);
+    ctx.restore();
+  }
+}
+
+function rollDice(type) {
+  if (aiMode) toggleAI(); // 玩家点击时中断AI
+  const cost = { normal: 100, elite: 150, universal: 300 }[type];
+  const diceImg = document.getElementById('dice-img');
+  const adTip = document.getElementById('ad-tip');
+  // 新增：精英骰子和万能骰子金币不足时提示
+  if ((type === 'elite' || type === 'universal') && gold < cost) {
+    adTip.style.display = 'block';
+    clearTimeout(adTipTimer);
+    adTipTimer = setTimeout(() => {
+      adTip.style.display = 'none';
+    }, 1000);
+    return;
+  }
+  // 新增：初始金币1000时必定进house，但先显示骰子图片
+  if (gold === 1000) {
+    gold -= cost;
+    goldEl.textContent = gold;
+    updateChallengeButton();
+    const steps = 3; // 固定为3.png
+    diceImg.src = steps + '.png';
+    diceImg.style.display = 'block';
+    clearTimeout(rollDisplayTimeout);
+    rollDisplayTimeout = setTimeout(() => {
+      diceImg.style.display = 'none';
+      movePlayerToHouse();
+    }, 1000);
+    if (soundEnabled) playSound('roll');
+    return;
+  }
+  if (gold < cost) return;
+  gold -= cost;
+  goldEl.textContent = gold;
+  updateChallengeButton();
+  let prob = { normal: 0.02, elite: 0.08, universal: 0.2 }[type];
+  if (Math.random() < prob) {
+    const steps = Math.ceil(Math.random() * 6);
+    diceImg.src = steps + '.png';
+    diceImg.style.display = 'block';
+    clearTimeout(rollDisplayTimeout);
+    rollDisplayTimeout = setTimeout(() => {
+      diceImg.style.display = 'none';
+      movePlayerToHouse();
+    }, 1000);
+    if (soundEnabled) playSound('roll');
+    return;
+  }
+  const steps = Math.ceil(Math.random() * 6);
+  diceImg.src = steps + '.png';
+  diceImg.style.display = 'block';
+  clearTimeout(rollDisplayTimeout);
+  rollDisplayTimeout = setTimeout(() => {
+    diceImg.style.display = 'none';
+    movePlayer(steps);
+  }, 1000);
+  if (soundEnabled) playSound('roll');
+}
+
+function movePlayer(steps) {
+  const path = [
+    [0,0], [1,0], [2,0], [3,0],
+    [3,1], [3,2], [3,3], [3,4],
+    [2,4], [1,4], [0,4],
+    [0,4], [0,3], [0,2], [0,1]
+  ];
+  let index = path.findIndex(([x, y]) => x === player.x && y === player.y);
+  index = (index + steps) % path.length;
+  player.x = path[index][0];
+  player.y = path[index][1];
+  handleTile(grid[player.y][player.x]);
+  drawGrid();
+}
+
+function handleTile(tile) {
+  
+  if (tile.startsWith('GEM')) {
+    const amount = parseInt(tile.replace('GEM', ''));
+    gold += amount;
+    goldEl.textContent = gold;
+    updateChallengeButton();
+    if (soundEnabled) playSound('gem');
+  } else if (tile === 'GENIE') {
+    gold += 100;
+    goldEl.textContent = gold;
+    if (soundEnabled) playSound('event');
+  } else if (tile === 'HOUSE') {
+    addTowerToCenter();
+    if (soundEnabled) playSound('event');
+  } else if (tile === 'RED') {
+    wave++;
+    waveEl.textContent = wave + '/5';
+    if (soundEnabled) playSound('wave');
+  }
+  if (tile === 'GEM10') {
+  const modal = document.getElementById('gem10-modal');
+  modal.style.display = 'block';
+  setTimeout(() => {
+    modal.style.display = 'none';
+  }, 1500);
+}
+  
+}
+
+function addTowerToCenter() {
+  const centerPositions = [
+    { x: 1, y: 1 }, { x: 2, y: 1 },
+    { x: 1, y: 2 }, { x: 2, y: 2 }
+  ];
+  const available = centerPositions.filter(pos =>
+    !towers.some(t => t.x === pos.x && t.y === pos.y)
+  );
+  if (available.length > 0) {
+    const spot = available[Math.floor(Math.random() * available.length)];
+    towers.push({ ...spot, level: 1 });
+  } else {
+    // 如果没有空位，随机选一个已有炮台升级
+    const spot = centerPositions[Math.floor(Math.random() * centerPositions.length)];
+    const tower = towers.find(t => t.x === spot.x && t.y === spot.y);
+    if (tower) {
+      tower.level = (tower.level || 1) + 1;
+      // 角色升级提示
+      showUpgradeTip = true;
+      clearTimeout(upgradeTipTimer);
+      drawGrid();
+      upgradeTipTimer = setTimeout(() => {
+        showUpgradeTip = false;
+        drawGrid();
+      }, 1000);
+    }
+  }
+}
+
+function playSound(type) {
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+  o.type = type === 'gem' ? 'triangle' : 'square';
+  o.frequency.value = { roll: 440, gem: 880, wave: 660, event: 330 }[type];
+  o.start();
+  o.stop(audioCtx.currentTime + 0.5);
+}
+
+function toggleAI() {
+  aiMode = !aiMode;
+  gold = 1000;
+  goldEl.textContent = gold;
+  updateChallengeButton();
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+}
+
+function challengeBoss() {
+  bossMode = true;
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('top-right-buttons').style.display = 'none';
+  document.getElementById('challenge-btn').style.display = 'none';
+  if (towers.length === 0) {
+    // 默认在中心生成一个炮台
+    towers.push({ x: 1, y: 1 });
+  }
+  spawnMonsters();
+  bullets = [];
+  animateMonsters();
+  fireLoop();
+}
+
+function spawnMonsters() {
+  monsters = [];
+  const center = { x: canvas.width / 2, y: canvas.height / 2 };
+  // 四周各放6个小怪
+  for (let i = 0; i < 6; i++) {
+    // 上
+    monsters.push({ x: boardOffset.x + (i + 1) * (tileSize.w + tileGap), y: boardOffset.y, tx: center.x, ty: center.y, hp: 1 });
+    // 下
+    monsters.push({ x: boardOffset.x + (i + 1) * (tileSize.w + tileGap), y: boardOffset.y + (tileSize.h + tileGap) * grid.length - tileGap, tx: center.x, ty: center.y, hp: 1 });
+    // 左
+    monsters.push({ x: boardOffset.x, y: boardOffset.y + (i + 1) * (tileSize.h + tileGap), tx: center.x, ty: center.y, hp: 1 });
+    // 右
+    monsters.push({ x: boardOffset.x + (tileSize.w + tileGap) * grid[0].length - tileGap, y: boardOffset.y + (i + 1) * (tileSize.h + tileGap), tx: center.x, ty: center.y, hp: 1 });
+  }
+}
+
+function fireLoop() {
+  if (!bossMode) return;
+  towers.forEach(tower => {
+    // 炮台像素坐标
+    const tx = boardOffset.x + tower.x * (tileSize.w + tileGap) + tileSize.w / 2;
+    const ty = boardOffset.y + tower.y * (tileSize.h + tileGap) + tileSize.h / 2;
+    // 找最近的小怪
+    let target = null, minDist = Infinity;
+    monsters.forEach(m => {
+      const dx = m.x - tx, dy = m.y - ty;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < minDist) {
+        minDist = dist;
+        target = m;
+      }
+    });
+    if (target) {
+      bullets.push({
+        x: tx, y: ty,
+        tx: target.x, ty: target.y,
+        speed: 12
+      });
+    }
+  });
+  setTimeout(fireLoop, 300);
+}
+
+function updateBullets() {
+  let goldEarned = 0;
+  bullets.forEach(bullet => {
+    let hitMonster = null;
+    monsters.forEach(m => {
+      const dx = m.x - bullet.x;
+      const dy = m.y - bullet.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 14 && !hitMonster) {
+        hitMonster = m;
+      }
+    });
+    if (hitMonster) {
+      hitMonster.hp--;
+      bullet.hit = true;
+      if (hitMonster.hp <= 0) {
+        goldEarned += 50;
+      }
+    }
+    const dx = bullet.tx - bullet.x;
+    const dy = bullet.ty - bullet.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > bullet.speed && !bullet.hit) {
+      bullet.x += (dx / dist) * bullet.speed;
+      bullet.y += (dy / dist) * bullet.speed;
+    } else {
+      bullet.x = bullet.tx;
+      bullet.y = bullet.ty;
+      bullet.hit = true;
+    }
+  });
+  // 移除血量<=0的小怪
+  const before = monsters.length;
+  monsters = monsters.filter(m => m.hp > 0);
+  // 检查碰撞并移除子弹
+  bullets = bullets.filter(b => !b.hit);
+  // 增加金币并更新显示
+  if (goldEarned > 0) {
+    gold += goldEarned;
+    goldEl.textContent = gold;
+  }
+  // 如果所有怪物消失，弹出胜利界面，2秒后回到初始界面
+  if (bossMode && monsters.length === 0) {
+    bossMode = false;
+    document.getElementById('victory-modal').style.display = 'flex';
+    setTimeout(() => {
+      document.getElementById('victory-modal').style.display = 'none';
+      document.getElementById('controls').style.display = 'flex';
+      document.getElementById('top-right-buttons').style.display = 'flex';
+      document.getElementById('challenge-btn').style.display = 'none';
+      drawGrid();
+    }, 2000);
+  }
+}
+
+function animateMonsters() {
+  if (!bossMode) return;
+  let allArrived = true;
+  monsters.forEach(m => {
+    const dx = m.tx - m.x;
+    const dy = m.ty - m.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 2) {
+      m.x += dx * 0.001;
+      m.y += dy * 0.001;
+      allArrived = false;
+    } else {
+      m.x = m.tx;
+      m.y = m.ty;
+    }
+  });
+  updateBullets();
+  drawGrid();
+  if (!allArrived || bossMode) {
+    requestAnimationFrame(animateMonsters);
+  }
+}
+
+// 新增：强制经过下一个house格子
+function movePlayerToHouse() {
+  const path = [
+    [0,0], [1,0], [2,0], [3,0],
+    [3,1], [3,2], [3,3], [3,4],
+    [2,4], [1,4], [0,4],
+    [0,4], [0,3], [0,2], [0,1]
+  ];
+  let index = path.findIndex(([x, y]) => x === player.x && y === player.y);
+  // 找到下一个house格子的索引
+  let nextHouseIdx = null;
+  for (let i = 1; i <= path.length; i++) {
+    let idx = (index + i) % path.length;
+    let [x, y] = path[idx];
+    if (grid[y][x] === 'HOUSE') {
+      nextHouseIdx = idx;
+      break;
+    }
+  }
+  if (nextHouseIdx !== null) {
+    player.x = path[nextHouseIdx][0];
+    player.y = path[nextHouseIdx][1];
+    handleTile('HOUSE');
+    drawGrid();
+  }
+}
+
+window.onload = function() {
+  document.getElementById('controls').style.display = 'flex';
+  document.getElementById('top-right-buttons').style.display = 'flex';
+  bossMode = false;
+  updateChallengeButton();
+  drawGrid();
+};
+
+// 删除或注释掉aiLoop();的调用
+// aiLoop();
+</script>
+</body>
+</html>
