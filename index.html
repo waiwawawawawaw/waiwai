@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Roll War - 8bit AI Demo</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #131313;
+      color: #fff;
+      font-family: monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #game-wrapper {
+      border: 6px solid #444;
+      padding: 12px;
+      background: #111 url(bg.jpg) no-repeat center center;
+      background-size: cover;
+      width: 720px;
+      height: 1280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px #000;
+      position: relative;
+    }
+    #game {
+      image-rendering: pixelated;
+      display: block;
+      margin: 0 auto;
+      position: relative;
+      left: 86px;
+      top: 13%;
+    }
+    #hud {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 14px;
+      position: relative;
+    }
+    #gold-display {
+      position: absolute;
+      top: 50px;
+      right: 30px;
+    }
+    #controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 12px;
+      gap: 15px;
+      flex-wrap: wrap;
+      position: relative;
+      top: 150px;
+      flex-direction: row;
+    }
+    #top-right-buttons {
+      position: absolute;
+      top: 60px;
+      right: 60px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #top-right-buttons button {
+      font-size: 18px;
+      padding: 8px 16px;
+      background: #444;
+      border: 2px solid #888;
+      color: white;
+      cursor: pointer;
+    }
+    #top-right-buttons button:hover {
+      background: #666;
+    }
+    button {
+      font-size: 30px;
+      padding: 0 8px;
+      background: #444;
+      border: 1px solid #888;
+      color: white;
+      cursor: pointer;
+      height: 60px;
+      line-height: 60px;
+      box-sizing: border-box;
+    }
+    button:hover {
+      background: #666;
+    }
+    #controls button:nth-child(1) {
+      background: url('pt-button.png') no-repeat center;
+      background-size: cover;
+      border: none;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      font-weight: bold;
+      width: 220px;
+      height: 100px;
+    }
+    #controls button:nth-child(2) {
+      background: url('jy-button.png') no-repeat center;
+      background-size: cover;
+      border: none;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      font-weight: bold;
+      width: 220px;
+      height: 100px;
+    }
+    #controls button:nth-child(3) {
+      background: url('wn-button.png') no-repeat center;
+      background-size: cover;
+      border: none;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+      font-weight: bold;
+      width: 220px;
+      height: 100px;
+    }
+    #controls button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+    }
+    #challenge-btn {
+      display: none;
+      font-size: 18px;
+      padding: 16px 32px;
+      background: #e53935;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      font-weight: bold;
+      position: fixed;
+      left: 50%;
+      top: calc(50% + 200px);
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      box-shadow: 0 0 20px #e53935;
+      height: calc(25px + 32px + 32px);
+    }
+  </style>
+</head>
+<body>
+<div id="gem10-modal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);padding:20px 40px;border-radius:10px;border:2px solid #4CAF50;color:white;font-size:24px;z-index:1000;text-align:center;">
+  <img src="jn.png" style="display:block;margin:0 auto 20px auto;width:60px;height:60px;">
+  <div>获得雷电伤害，秒杀10%怪物</div>
+</div>
+
+<div id="tower-upgrade-modal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);padding:30px 40px;border-radius:15px;border:2px solid #9C27B0;color:white;font-size:20px;z-index:1000;text-align:center;">
+  <div style="margin-bottom:20px;font-size:24px;color:#9C27B0;">炮台升级选择</div>
+  <div style="margin-bottom:20px;">选择升级等级，消耗对应钻石</div>
+  <div style="display:flex;gap:15px;justify-content:center;">
+    <button onclick="upgradeTower(1)" style="padding:10px 20px;background:#4CAF50;border:none;color:white;border-radius:5px;cursor:pointer;font-size:14px;">升级1级<br>(10钻石)</button>
+    <button onclick="upgradeTower(2)" style="padding:10px 20px;background:#2196F3;border:none;color:white;border-radius:5px;cursor:pointer;font-size:14px;">升级2级<br>(20钻石)</button>
+    <button onclick="upgradeTower(3)" style="padding:10px 20px;background:#FF9800;border:none;color:white;border-radius:5px;cursor:pointer;font-size:14px;">升级3级<br>(30钻石)</button>
+  </div>
+  <button onclick="closeTowerUpgradeModal()" style="margin-top:15px;padding:8px 16px;background:#666;border:none;color:white;border-radius:5px;cursor:pointer;">取消</button>
+</div>
+
+<div id="game-wrapper">
+  <div id="top-right-buttons">
+    <button onclick="showDiceInfo()">提示</button>
+    <button onclick="toggleSound()">音乐</button>
+  </div>
+  <div id="jin-power-container" style="display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:calc(50% + 200px); z-index:1000; text-align:center;">
+    <img id="jin-power-img" src="jin.png" style="width:48px; height:48px;">
+    <div id="lightning-counter" style="color:#FFD700; font-size:16px; font-weight:bold; margin-top:5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">5/5</div>
+  </div>
+  <canvas id="game" width="420" height="764"></canvas>
+  <img id="dice-img" style="display:none; position:absolute; left:50%; top:50%; transform:translate(-50%, 100px); width:48px; height:48px; z-index:2000;">
+  <div id="ad-tip" style="display:none; position:absolute; left:50%; top:50%; transform:translate(-50%, 200px); font-size:30px; color:#e72931; font-weight:bold; z-index:2000; text-align:center;">
+    <div style="margin:15px auto 0 auto; width:120px; height:60px; background:#111; border-radius:2px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px;">
+      找个广告看看
+    </div>
+  </div>
+  <div id="hud">
+    <div id="gold-display">
+      <div><img src="gold.png" style="width: 30px; height: 30px; vertical-align: middle;"> 金币: <span id="gold">600</span></div>
+      <div style="margin-top: 10px;"><img src="gem5.png" style="width: 30px; height: 30px; vertical-align: middle;"> 钻石: <span id="diamonds">0</span></div>
+      <div style="margin-top: 10px;"><img src="dz.png" style="width: 30px; height: 30px; vertical-align: middle;"> 波数: <span id="wave">1/5</span></div>
+
+    </div>
+  </div>
+  <div id="controls">
+    <button onclick="rollDice('normal')">普通骰子（100）</button>
+    <button onclick="rollDice('elite')">精英骰子（150）</button>
+    <button onclick="rollDice('universal')">万能骰子（300）</button>
+  </div>
+</div>
+
+<div id="victory-modal" style="display:none;position:fixed;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.7);z-index:100;justify-content:center;align-items:center;">
+  <div style="background:#222;padding:40px 60px;border-radius:20px;box-shadow:0 0 30px #000;text-align:center;">
+    <h1 style="color:#FFD700;margin:0 0 20px 0;">胜利！</h1>
+    <p style="color:#fff;font-size:20px;">所有怪物已被消灭</p>
+  </div>
+</div>
+
+<button id="challenge-btn" style="display:none;" onclick="challengeBoss()">红温状态！点击挑战</button>
+
+<button id="lightning-btn" style="display:none;position:fixed;left:50%;top:80%;transform:translate(-50%,-50%);font-size:18px;padding:16px 32px;background:#FFD700;color:#000;border:2px solid #FFA500;border-radius:8px;font-weight:bold;z-index:1000;box-shadow:0 0 20px #FFD700;" onclick="useLightning()">⚡ 雷电攻击</button>
+
+<!-- 屏幕中央的角色血条 -->
+<div id="center-hp-bar" style="display:none;position:fixed;left:50%;top:calc(50% + 400px);transform:translate(-50%,-50%);z-index:1000;text-align:center;">
+  <div style="color: #fff; font-size: 18px; margin-bottom: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">路飞血量</div>
+  <div style="width: 430px; height: 30px; background: #333; border: 3px solid #666; border-radius: 15px; overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.5);">
+    <div id="center-hp-fill" style="width: 100%; height: 100%; background: #4caf50; transition: width 0.3s ease;"></div>
+  </div>
+  <div style="color: #fff; font-size: 16px; margin-top: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
+    <span id="center-hp-text">100/100</span>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const goldEl = document.getElementById('gold');
+const diamondsEl = document.getElementById('diamonds');
+const waveEl = document.getElementById('wave');
+
+const grid = [
+  ['GO', 'RED', 'GEM10', 'HOUSE'],
+  ['RED', 'MONSTER', 'MONSTER', 'RED'],
+  ['RED', 'MONSTER', 'MONSTER', 'RED'],
+  ['GENIE', 'MONSTER', 'MONSTER', 'RED'],
+  ['HOUSE', 'RED', 'RED', 'HOUSE']
+];
+
+const tileSize = { w: 58, h: 53 };
+const tileGap = 6;
+const boardW = tileSize.w * grid[0].length + tileGap * (grid[0].length - 1);
+const boardH = tileSize.h * grid.length + tileGap * (grid.length - 1);
+const boardOffset = { x: 0, y: (382 - boardH) / 2 + 50 };
+let player = { x: 0, y: 0 };
+let gold = 600; // 初始金币
+let diamonds = 0;
+let aiMode = true;
+let soundEnabled = true;
+let wave = 1;
+let playerHP = 100;
+let maxPlayerHP = 100;
+let lastDamageTime = 0;
+const towers = [];
+let lastRoll = null;
+let rollDisplayTimeout = null;
+let bossMode = false;
+let monsters = [];
+let bullets = [];
+let upgradeTipTimer = null;
+let showUpgradeTip = false;
+let adTipTimer = null;
+let lastDiceType = 'normal';
+let showAdTip = false;
+
+// GENIE必定触发机制相关变量
+let nextGenieWave = 5; // 下一个必定触发GENIE的波次
+
+// 雷电动画相关变量
+let lightningActive = false;
+let lightningFrame = 0;
+let lightningTimer = 0;
+let lightningImages = {};
+let lightningImageLoaded = false;
+let hasLightningPower = false;
+let lightningAttackCount = 0; // 记录雷电攻击次数，最多5次
+let lightningAttackTimer = 0;
+let lightningPosition = { x: 0, y: 0 };
+
+// 伤害数字相关变量
+let damageNumbers = [];
+
+// 怪物图片相关变量
+let monsterImages = {};
+let monsterImageLoaded = false;
+
+// BOSS动画相关变量
+let bossAnimationFrame = 0;
+let bossAnimationTimer = 0;
+let bossImages = {};
+let bossImageLoaded = false;
+const bossImageFiles = ['BOSS.png', 'BOSS1.png', 'BOSS2.png'];
+
+// 技能动画相关变量
+let skillAnimationFrame = 0;
+let skillAnimationTimer = 0;
+let skillImages = {};
+let skillImageLoaded = false;
+const skillImageFiles = ['jineng1.png', 'jineng2.png', 'jineng3.png'];
+let isPlayingSkill = false;
+let skillPosition = { x: 0, y: 0 };
+let skillPauseTimer = 0;
+let isSkillPaused = false;
+
+// 角色动画相关变量
+let playerAnimationFrame = 0;
+let playerAnimationTimer = 0;
+let playerImages = {};
+let playerImageLoaded = false;
+const playerImageFiles = ['player1.png', 'player2.png', 'player3.png'];
+
+// 炮台角色动画相关变量
+let towerAnimationFrame = 0;
+let towerAnimationTimer = 0;
+let towerImages = {};
+let towerImageLoaded = false;
+const towerImageFiles = [
+  ['tower1_1.png', 'tower1_2.png', 'tower1_3.png'],
+  ['tower2_1.png', 'tower2_2.png', 'tower2_3.png'],
+  ['tower3_1.png', 'tower3_2.png', 'tower3_3.png'],
+  ['tower4_1.png', 'tower4_2.png', 'tower4_3.png']
+];
+
+// 角色移动动画相关变量
+let isPlayerMoving = false;
+let moveStepsRemaining = 0;
+let moveStepDelay = 300;
+let moveTimer = 0;
+
+// 防连击保护变量
+let isDiceRolling = false;
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+const colors = {
+  'GO': '#FFD700', 'RED': '#B22222', 'GEM5': '#9932CC', 'GEM10': '#8A2BE2', 'GEM15': '#9400D3',
+  'HOUSE': '#708090', 'HOUSE_B': '#4682B4', 'GENIE': '#800080', 'MONSTER': '#556B2F', 'PLAYER': '#FF4500'
+};
+
+const tileImages = {};
+const tileTypes = ['go', 'gem5', 'gem10', 'gem15', 'red', 'house', 'genie', 'monster'];
+tileTypes.forEach(type => {
+  const img = new Image();
+  img.src = type + '.png';
+  tileImages[type.toUpperCase()] = img;
+});
+
+// 加载角色动画图片
+function loadPlayerImages() {
+  let loadedCount = 0;
+  playerImageFiles.forEach((filename, index) => {
+    const img = new Image();
+    img.onload = () => {
+      loadedCount++;
+      if (loadedCount === playerImageFiles.length) {
+        playerImageLoaded = true;
+      }
+    };
+    img.onerror = () => {
+      console.warn(`无法加载角色图片: ${filename}`);
+      loadedCount++;
+      if (loadedCount === playerImageFiles.length) {
+        playerImageLoaded = true;
+      }
+    };
+    img.src = filename;
+    playerImages[index] = img;
+  });
+}
+
+// 加载炮台角色动画图片
+function loadTowerImages() {
+  let totalImages = 0;
+  let loadedCount = 0;
+  
+  towerImageFiles.forEach((levelFrames, level) => {
+    towerImages[level] = {};
+    levelFrames.forEach((filename, frame) => {
+      totalImages++;
+      const img = new Image();
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          towerImageLoaded = true;
+          console.log('所有炮台图片加载完成');
+        }
+      };
+      img.onerror = () => {
+        console.warn(`无法加载炮台图片: ${filename}`);
+        towerImages[level][frame] = null;
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          towerImageLoaded = true;
+          console.log('炮台图片加载完成（部分失败）');
+        }
+      };
+      img.src = filename;
+      towerImages[level][frame] = img;
+    });
+  });
+}
+
+// 加载雷电动画图片
+function loadLightningImages() {
+  const lightningFiles = ['light1.png', 'light2.png', 'light3.png'];
+  let loadedCount = 0;
+  
+  lightningFiles.forEach((filename, index) => {
+    const img = new Image();
+    img.onload = () => {
+      loadedCount++;
+      if (loadedCount === lightningFiles.length) {
+        lightningImageLoaded = true;
+        console.log('雷电图片加载完成');
+      }
+    };
+    img.onerror = () => {
+      console.warn(`无法加载雷电图片: ${filename}`);
+      lightningImages[index] = null;
+      loadedCount++;
+      if (loadedCount === lightningFiles.length) {
+        lightningImageLoaded = true;
+        console.log('雷电图片加载完成（部分失败）');
+      }
+    };
+    img.src = filename;
+    lightningImages[index] = img;
+  });
+}
+
+// 加载怪物图片
+function loadMonsterImages() {
+  const monsterFiles = ['xiao.png', 'BOSS.png'];
+  let loadedCount = 0;
+  
+  monsterFiles.forEach((filename, index) => {
+    const img = new Image();
+    img.onload = () => {
+      loadedCount++;
+      if (loadedCount === monsterFiles.length) {
+        monsterImageLoaded = true;
+        console.log('怪物图片加载完成');
+      }
+    };
+    img.onerror = () => {
+      console.warn(`无法加载怪物图片: ${filename}`);
+      monsterImages[index === 0 ? 'normal' : 'boss'] = null;
+      loadedCount++;
+      if (loadedCount === monsterFiles.length) {
+        monsterImageLoaded = true;
+        console.log('怪物图片加载完成（部分失败）');
+      }
+    };
+    img.src = filename;
+    monsterImages[index === 0 ? 'normal' : 'boss'] = img;
+  });
+}
+
+// 加载BOSS动画图片
+function loadBossImages() {
+  let loadedCount = 0;
+  bossImageFiles.forEach((filename, index) => {
+    const img = new Image();
+    img.onload = () => {
+      loadedCount++;
+      if (loadedCount === bossImageFiles.length) {
+        bossImageLoaded = true;
+        console.log('BOSS动画图片加载完成');
+      }
+    };
+    img.onerror = () => {
+      console.warn(`无法加载BOSS图片: ${filename}`);
+      bossImages[index] = null;
+      loadedCount++;
+      if (loadedCount === bossImageFiles.length) {
+        bossImageLoaded = true;
+        console.log('BOSS动画图片加载完成（部分失败）');
+      }
+    };
+    img.src = filename;
+    bossImages[index] = img;
+  });
+}
+
+// 加载技能动画图片
+function loadSkillImages() {
+  let loadedCount = 0;
+  skillImageFiles.forEach((filename, index) => {
+    const img = new Image();
+    img.onload = () => {
+      loadedCount++;
+      if (loadedCount === skillImageFiles.length) {
+        skillImageLoaded = true;
+        console.log('技能动画图片加载完成');
+      }
+    };
+    img.onerror = () => {
+      console.warn(`无法加载技能图片: ${filename}`);
+      skillImages[index] = null;
+      loadedCount++;
+      if (loadedCount === skillImageFiles.length) {
+        skillImageLoaded = true;
+        console.log('技能动画图片加载完成（部分失败）');
+      }
+    };
+    img.src = filename;
+    skillImages[index] = img;
+  });
+}
+
+// 初始化时加载所有图片
+loadPlayerImages();
+loadTowerImages();
+loadLightningImages();
+loadMonsterImages();
+loadBossImages();
+loadSkillImages();
+
+// 备用怪物绘制函数
+function drawMonsterFallback(m, radius, isBoss) {
+  ctx.beginPath();
+  ctx.arc(m.x, m.y, radius, 0, Math.PI * 2);
+  
+  if (isBoss) {
+    ctx.fillStyle = '#e53935';
+  } else {
+    ctx.fillStyle = '#4caf50';
+  }
+  
+  ctx.fill();
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = isBoss ? 4 : 3;
+  ctx.stroke();
+  ctx.closePath();
+  
+  const eyeOffset = radius * 0.3;
+  const eyeSize = radius * 0.12;
+  const pupilSize = radius * 0.05;
+  
+  ctx.beginPath();
+  ctx.arc(m.x - eyeOffset, m.y - radius * 0.15, eyeSize, 0, Math.PI * 2);
+  ctx.arc(m.x + eyeOffset, m.y - radius * 0.15, eyeSize, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.closePath();
+  
+  ctx.beginPath();
+  ctx.arc(m.x - eyeOffset, m.y - radius * 0.15, pupilSize, 0, Math.PI * 2);
+  ctx.arc(m.x + eyeOffset, m.y - radius * 0.15, pupilSize, 0, Math.PI * 2);
+  ctx.fillStyle = '#222';
+  ctx.fill();
+  ctx.closePath();
+}
+
+// 绘制动画角色
+function drawAnimatedPlayer(px, py) {
+  const centerX = px + 24;
+  const centerY = py + 24;
+  
+  playerAnimationTimer += 16;
+  if (playerAnimationTimer > 400) {
+    playerAnimationFrame = (playerAnimationFrame + 1) % 3;
+    playerAnimationTimer = 0;
+  }
+  
+  if (playerImageLoaded && playerImages[playerAnimationFrame] && playerImages[playerAnimationFrame].complete) {
+    const img = playerImages[playerAnimationFrame];
+    const imgWidth = 52;
+    const imgHeight = 42;
+    
+    ctx.drawImage(img, centerX - imgWidth/2, centerY - imgHeight/2, imgWidth, imgHeight);
+  } else {
+    ctx.fillStyle = '#FF0';
+    ctx.fillRect(px + 16, py + 16, 16, 16);
+  }
+}
+
+// 绘制动画炮台
+function drawAnimatedTower(px, py, level) {
+  const centerX = px + 24;
+  const centerY = py + 24;
+  
+  towerAnimationTimer += 16;
+  if (towerAnimationTimer > 500) {
+    towerAnimationFrame = (towerAnimationFrame + 1) % 3;
+    towerAnimationTimer = 0;
+  }
+  
+  const towerType = Math.min(level - 1, 3);
+  
+  let canUseImage = false;
+  if (towerImageLoaded && towerImages[towerType] && towerImages[towerType][towerAnimationFrame]) {
+    const img = towerImages[towerType][towerAnimationFrame];
+    canUseImage = img !== null && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
+  }
+  
+  if (canUseImage) {
+    try {
+      const img = towerImages[towerType][towerAnimationFrame];
+      const imgWidth = 78;
+      const imgHeight = 78;
+      
+      ctx.drawImage(img, centerX - imgWidth/2, centerY - imgHeight/2, imgWidth, imgHeight);
+      return;
+    } catch (e) {
+      console.warn('炮台图片绘制失败，使用备用样式:', e);
+    }
+  }
+  
+  let color = '#fff';
+  if (level === 2) color = '#2196f3';
+  if (level === 3) color = '#9c27b0';
+  if (level >= 4) color = '#FFD700';
+  
+  ctx.fillStyle = color;
+  ctx.fillRect(px + 12, py + 12, 24, 24);
+  ctx.fillStyle = '#222';
+  ctx.font = 'bold 18px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(level, px + 24, py + 24);
+}
+
+function updateChallengeButton() {
+  const btn = document.getElementById('challenge-btn');
+  if (gold < 100) {
+    btn.style.display = 'block';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+// 更新角色血条显示
+function updatePlayerHPBar() {
+  const centerHpBar = document.getElementById('center-hp-bar');
+  const centerHpFill = document.getElementById('center-hp-fill');
+  const centerHpText = document.getElementById('center-hp-text');
+  
+  if (bossMode) {
+    // 显示屏幕中央的血条
+    centerHpBar.style.display = 'block';
+    
+    const hpPercent = (playerHP / maxPlayerHP) * 100;
+    centerHpFill.style.width = hpPercent + '%';
+    
+    if (hpPercent > 60) {
+      centerHpFill.style.background = '#4caf50';
+    } else if (hpPercent > 30) {
+      centerHpFill.style.background = '#ff9800';
+    } else {
+      centerHpFill.style.background = '#f44336';
+    }
+    
+    centerHpText.textContent = `${playerHP}/${maxPlayerHP}`;
+  } else {
+    // 非BOSS模式隐藏血条
+    centerHpBar.style.display = 'none';
+  }
+}
+
+// 绘制炮塔保护区红线框
+function drawTowerProtectionZone() {
+  if (!bossMode) return;
+  
+  // 计算炮塔保护区范围（2x2格子区域）
+  const protectionLeft = boardOffset.x + 1 * (tileSize.w + tileGap);
+  const protectionTop = boardOffset.y + 1 * (tileSize.h + tileGap);
+  const protectionWidth = 2 * tileSize.w + tileGap;
+  const protectionHeight = 2 * tileSize.h + tileGap;
+  
+  ctx.save();
+  ctx.strokeStyle = '#9b5432'; // 红色线框
+  ctx.lineWidth = 3;
+  ctx.setLineDash([10, 5]); // 虚线效果
+  ctx.strokeRect(protectionLeft, protectionTop, protectionWidth, protectionHeight);
+  ctx.setLineDash([]); // 重置虚线
+  ctx.restore();
+  
+  // 添加保护区标识文字
+  ctx.save();
+  ctx.fillStyle = '#9b5432';
+  ctx.font = 'bold 14px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('保护路飞', protectionLeft + protectionWidth/2, protectionTop - 10);
+  ctx.restore();
+}
+
+// 绘制技能动画
+function drawSkillAnimation() {
+  if (!isPlayingSkill) return;
+
+  // 检查BOSS是否还存在
+  const bossExists = monsters.some(m => m.type === 'boss' && m.inProtectionZone);
+  if (!bossExists) {
+    isPlayingSkill = false;
+    skillAnimationFrame = 0;
+    isSkillPaused = false;
+    skillPauseTimer = 0;
+    return;
+  }
+
+  if (isSkillPaused) {
+    skillPauseTimer += 16;
+    if (skillPauseTimer >= 2000) { // 2秒暂停时间
+      isSkillPaused = false;
+      skillPauseTimer = 0;
+      skillAnimationFrame = 0; // 重置动画帧
+    }
+    return;
+  }
+
+  skillAnimationTimer += 16;
+  if (skillAnimationTimer > 200) {
+    skillAnimationFrame++;
+    skillAnimationTimer = 0;
+    
+    if (skillAnimationFrame >= 3) {
+      skillAnimationFrame = 2; // 保持在最后一帧
+      isSkillPaused = true; // 开始暂停
+      skillPauseTimer = 0;
+    }
+  }
+  
+  let canUseSkillImage = false;
+  if (skillImageLoaded && skillImages[skillAnimationFrame]) {
+    const img = skillImages[skillAnimationFrame];
+    canUseSkillImage = img !== null && img.complete && img.naturalWidth > 0;
+  }
+  
+  if (canUseSkillImage) {
+    try {
+      // 更新技能位置为当前BOSS位置
+      const boss = monsters.find(m => m.type === 'boss' && m.inProtectionZone);
+      if (boss) {
+        skillPosition.x = boss.x;
+        skillPosition.y = boss.y;
+      }
+
+      const img = skillImages[skillAnimationFrame];
+      const skillSize = 100; // 调整技能特效大小
+      
+      ctx.save();
+      ctx.globalAlpha = 0.8;
+      ctx.drawImage(img, skillPosition.x - skillSize/2, skillPosition.y - skillSize/2, skillSize, skillSize);
+      ctx.restore();
+    } catch (e) {
+      console.warn('技能图片绘制失败:', e);
+    }
+  }
+}
+
+function drawGrid() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (!bossMode) {
+    for (let y = 0; y < grid.length; y++) {
+      for (let x = 0; x < grid[0].length; x++) {
+        const type = grid[y][x];
+        const img = tileImages[type];
+        const px = boardOffset.x + x * (tileSize.w + tileGap);
+        const py = boardOffset.y + y * (tileSize.h + tileGap);
+        if (img && img.complete) {
+          ctx.drawImage(img, px, py, tileSize.w, tileSize.h);
+        } else {
+          ctx.fillStyle = colors[type] || '#333';
+          ctx.fillRect(px, py, tileSize.w, tileSize.h);
+        }
+        if (player.x === x && player.y === y) {
+          drawAnimatedPlayer(px, py);
+        }
+      }
+    }
+    towers.forEach(t => {
+      drawAnimatedTower(boardOffset.x + t.x * (tileSize.w + tileGap), boardOffset.y + t.y * (tileSize.h + tileGap), t.level);
+    });
+  }
+  
+  if (bossMode) {
+    // 绘制炮塔保护区
+    drawTowerProtectionZone();
+    
+    // 炮台
+    towers.forEach(t => {
+      drawAnimatedTower(boardOffset.x + t.x * (tileSize.w + tileGap), boardOffset.y + t.y * (tileSize.h + tileGap), t.level);
+    });
+    
+    // 子弹
+    bullets.forEach(b => {
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = '#fff';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.closePath();
+    });
+    
+    // 小怪
+    monsters.forEach(m => {
+      const radius = m.size || 12;
+      const isBoss = m.type === 'boss';
+      
+      // 更新BOSS动画帧
+      if (isBoss) {
+        bossAnimationTimer += 16;
+        if (bossAnimationTimer > 600) {
+          bossAnimationFrame = (bossAnimationFrame + 1) % 3;
+          bossAnimationTimer = 0;
+        }
+      }
+      
+      let canUseImage = false;
+      let img = null;
+      
+      if (isBoss) {
+        if (bossImageLoaded && bossImages[bossAnimationFrame]) {
+          img = bossImages[bossAnimationFrame];
+          canUseImage = img !== null && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
+        }
+      } else {
+        const imageType = 'normal';
+        if (monsterImageLoaded && monsterImages[imageType]) {
+          img = monsterImages[imageType];
+          canUseImage = img !== null && img.complete && img.naturalWidth > 0 && img.naturalHeight > 0;
+        }
+      }
+      
+      if (canUseImage) {
+        try {
+          const imgSize = isBoss ? radius * 5 : radius * 2;
+          ctx.drawImage(img, m.x - imgSize/2, m.y - imgSize/2, imgSize, imgSize);
+        } catch (e) {
+          console.warn('怪物图片绘制失败，使用备用样式:', e);
+          drawMonsterFallback(m, radius, isBoss);
+        }
+      } else {
+        drawMonsterFallback(m, radius, isBoss);
+      }
+      
+      // BOSS血量条
+      if (isBoss && m.hp > 0) {
+        const barWidth = radius * 2;
+        const barHeight = 6;
+        const barX = m.x - barWidth / 2;
+        const barY = m.y - radius - 15;
+        
+        ctx.fillStyle = '#333';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        const hpPercent = m.hp / 100;
+        ctx.fillStyle = hpPercent > 0.5 ? '#4caf50' : hpPercent > 0.2 ? '#ff9800' : '#f44336';
+        ctx.fillRect(barX, barY, barWidth * hpPercent, barHeight);
+        
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+        
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${m.hp}/100`, m.x, barY - 8);
+      }
+    });
+  }
+  
+  if (showUpgradeTip) {
+    ctx.save();
+    ctx.font = '30px bold';
+    ctx.fillStyle = '#f3e221';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('角色升级', canvas.width / 2-85, canvas.height / 2 - 80);
+    ctx.restore();
+  }
+  
+  if (lightningActive && bossMode) {
+    drawLightning();
+  }
+  
+  if (bossMode) {
+    updateDamageNumbers();
+    drawDamageNumbers();
+  }
+  
+  drawSkillAnimation();
+}
+
+function rollDice(type) {
+  lastDiceType = type;
+  if (isDiceRolling || isPlayerMoving) return;
+
+  const cost = { normal: 100, elite: 150, universal: 300 }[type];
+  const diceImg = document.getElementById('dice-img');
+  const adTip = document.getElementById('ad-tip');
+
+  if (gold < cost) {
+    adTip.style.display = 'block';
+    clearTimeout(adTipTimer);
+    adTipTimer = setTimeout(() => {
+      adTip.style.display = 'none';
+    }, 600);
+    return;
+  }
+
+  isDiceRolling = true;
+  gold -= cost;
+  goldEl.textContent = gold;
+  updateChallengeButton();
+
+  const path = [
+    [0,0], [1,0], [2,0], [3,0],
+    [3,1], [3,2], [3,3], [3,4],
+    [2,4], [1,4], [0,4],
+    [0,3], [0,2], [0,1]
+  ];
+  let index = path.findIndex(([x, y]) => x === player.x && y === player.y);
+
+  // GEM10格子概率加成机制
+  const gem10Chance = {
+    normal: 0.1,    // 普通骰子：10%概率
+    elite: 0.5,    // 精英骰子：50%概率
+    universal: 1.0  // 万能骰子：100%概率
+  };
+
+  // 检查GEM10概率触发
+  if (Math.random() < gem10Chance[type]) {
+    // 寻找能到达GEM10格子的步数
+    for (let i = 1; i <= 6; i++) {
+      const idx = (index + i) % path.length;
+      const [x, y] = path[idx];
+      if (grid[y][x] === 'GEM10') {
+        const steps = i;
+        diceImg.src = steps + '.png';
+        diceImg.style.display = 'block';
+        clearTimeout(rollDisplayTimeout);
+        rollDisplayTimeout = setTimeout(() => {
+          diceImg.style.display = 'none';
+          isDiceRolling = false;
+          movePlayer(steps);
+        }, 600);
+        if (soundEnabled) playSound('roll');
+        console.log(`${type}骰子概率触发GEM10！步数：${steps}`);
+        return;
+      }
+    }
+  }
+
+  // HOUSE格子概率加成机制
+  const houseChance = {
+    normal: 0.1,    // 普通骰子：10%概率
+    elite: 0.5,    // 精英骰子：50%概率
+    universal: 1.0  // 万能骰子：100%概率
+  };
+
+  // 检查HOUSE概率触发
+  if (Math.random() < houseChance[type]) {
+    // 寻找能到达HOUSE格子的步数
+    for (let i = 1; i <= 6; i++) {
+      const idx = (index + i) % path.length;
+      const [x, y] = path[idx];
+      if (grid[y][x] === 'HOUSE') {
+        const steps = i;
+        diceImg.src = steps + '.png';
+        diceImg.style.display = 'block';
+        clearTimeout(rollDisplayTimeout);
+        rollDisplayTimeout = setTimeout(() => {
+          diceImg.style.display = 'none';
+          isDiceRolling = false;
+          movePlayer(steps);
+        }, 600);
+        if (soundEnabled) playSound('roll');
+        console.log(`${type}骰子概率触发HOUSE！步数：${steps}`);
+        return;
+      }
+    }
+  }
+
+  // GENIE格子概率加成机制
+  const genieChance = {
+    normal: wave >= nextGenieWave ? 1.0 : 0.1,    // 普通骰子：必定触发波次100%，否则10%
+    elite: wave >= nextGenieWave ? 1.0 : 0.35,    // 精英骰子：必定触发波次100%，否则35%
+    universal: wave >= nextGenieWave ? 1.0 : 0.5  // 万能骰子：必定触发波次100%，否则50%
+  };
+
+  // 检查GENIE概率触发
+  if (Math.random() < genieChance[type]) {
+    // 寻找能到达GENIE格子的步数
+    for (let i = 1; i <= 6; i++) {
+      const idx = (index + i) % path.length;
+      const [x, y] = path[idx];
+      if (grid[y][x] === 'GENIE') {
+        const steps = i;
+        diceImg.src = steps + '.png';
+        diceImg.style.display = 'block';
+        clearTimeout(rollDisplayTimeout);
+        rollDisplayTimeout = setTimeout(() => {
+          diceImg.style.display = 'none';
+          isDiceRolling = false;
+          movePlayer(steps);
+        }, 600);
+        if (soundEnabled) playSound('roll');
+        
+        // 如果是必定触发波次，重新计算下一个必定触发波次
+        if (wave >= nextGenieWave) {
+          nextGenieWave = wave + 5; // 下一个必定触发波次为当前波次+4
+          console.log(`${type}骰子在第${wave}波必定触发GENIE！下一个必定触发波次：第${nextGenieWave}波`);
+        } else {
+          console.log(`${type}骰子在第${wave}波概率触发GENIE！步数：${steps}`);
+        }
+        return;
+      }
+    }
+  }
+
+  // 原有的特殊逻辑
+  // 移除旧的HOUSE和GEM10特殊逻辑，因为已经由概率机制替代
+
+  // 普通随机投掷
+  const steps = Math.ceil(Math.random() * 6);
+  diceImg.src = steps + '.png';
+  diceImg.style.display = 'block';
+  clearTimeout(rollDisplayTimeout);
+  rollDisplayTimeout = setTimeout(() => {
+    diceImg.style.display = 'none';
+    isDiceRolling = false;
+    movePlayer(steps);
+  }, 600);
+  if (soundEnabled) playSound('roll');
+}
+
+function movePlayer(steps) {
+  isPlayerMoving = true;
+  moveStepsRemaining = steps;
+  moveTimer = 0;
+  
+  setTimeout(() => {
+    movePlayerOneStep();
+  }, moveStepDelay);
+}
+
+function movePlayerOneStep() {
+  if (moveStepsRemaining <= 0) {
+    isPlayerMoving = false;
+    handleTile(grid[player.y][player.x]);
+    return;
+  }
+  
+  const path = [
+    [0,0], [1,0], [2,0], [3,0],
+    [3,1], [3,2], [3,3], [3,4],
+    [2,4], [1,4], [0,4],
+    [0,3], [0,2], [0,1]
+  ];
+  
+  moveStepsRemaining--;
+  
+  let index = path.findIndex(([x, y]) => x === player.x && y === player.y);
+  index = (index + 1) % path.length;
+  player.x = path[index][0];
+  player.y = path[index][1];
+  
+  if (soundEnabled) {
+    const currentTile = grid[player.y][player.x];
+    playMoveSound(currentTile);
+  }
+  
+  drawGrid();
+  
+  if (moveStepsRemaining > 0) {
+    setTimeout(() => {
+      movePlayerOneStep();
+    }, moveStepDelay);
+  } else {
+    isPlayerMoving = false;
+    handleTile(grid[player.y][player.x]);
+  }
+}
+
+function handleTile(tile) {
+  if (tile.startsWith('GEM')) {
+    const amount = parseInt(tile.replace('GEM', ''));
+    gold += amount;
+    goldEl.textContent = gold;
+    updateChallengeButton();
+    if (soundEnabled) playSound('gem');
+  } else if (tile === 'GENIE') {
+    showTowerUpgradeModal();
+    if (soundEnabled) playSound('event');
+    
+    // 如果是必定触发波次，重新计算下一个必定触发波次
+    if (wave >= nextGenieWave) {
+      nextGenieWave = wave + 5;
+      console.log(`在第${wave}波停在GENIE格子！下一个必定触发波次：第${nextGenieWave}波`);
+    } else {
+      console.log(`在第${wave}波停在GENIE格子！`);
+    }
+  } else if (tile === 'HOUSE') {
+    addTowerToCenter();
+    if (soundEnabled) playSound('event');
+  } else if (tile === 'RED') {
+    diamonds += 5;
+    diamondsEl.textContent = diamonds;
+    if (soundEnabled) playSound('gem');
+  }
+  
+  if (tile === 'GEM10') {
+    // 额外奖励：+5钻石和100金币
+    diamonds += 5;
+    diamondsEl.textContent = diamonds;
+    gold += 100;
+    goldEl.textContent = gold;
+    updateChallengeButton();
+    
+    const modal = document.getElementById('gem10-modal');
+    modal.style.display = 'block';
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 1500);
+
+    // 显示金币能量图标和计数器
+    const jinPowerContainer = document.getElementById('jin-power-container');
+    jinPowerContainer.style.display = 'block';
+    const lightningCounter = document.getElementById('lightning-counter');
+    lightningCounter.textContent = '5/5';
+
+    if (!bossMode) {
+      hasLightningPower = true;
+      console.log('获得雷电能力！进入BOSS模式时将自动触发雷电攻击');
+    }
+    
+    console.log(`停在GEM10格子！获得100金币 + 5钻石 + 雷电能力`);
+  }
+}
+
+function addTowerToCenter() {
+  const centerPositions = [
+    { x: 1, y: 1 }, { x: 2, y: 1 },
+    { x: 1, y: 2 }, { x: 2, y: 2 }
+  ];
+  const available = centerPositions.filter(pos =>
+    !towers.some(t => t.x === pos.x && t.y === pos.y)
+  );
+  if (available.length > 0) {
+    const spot = available[Math.floor(Math.random() * available.length)];
+    towers.push({ ...spot, level: 1 });
+  } else {
+    const spot = centerPositions[Math.floor(Math.random() * centerPositions.length)];
+    const tower = towers.find(t => t.x === spot.x && t.y === spot.y);
+    if (tower) {
+      tower.level = (tower.level || 1) + 1;
+      showUpgradeTip = true;
+      clearTimeout(upgradeTipTimer);
+      drawGrid();
+      upgradeTipTimer = setTimeout(() => {
+        showUpgradeTip = false;
+        drawGrid();
+      }, 1000);
+    }
+  }
+}
+
+function playSound(type) {
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+  o.type = type === 'gem' ? 'triangle' : 'square';
+  o.frequency.value = { 
+    roll: 440, 
+    gem: 880, 
+    wave: 660, 
+    event: 330,
+    move: 220,
+    lightning: 1200,
+    damage: 150
+  }[type];
+  o.start();
+  const duration = type === 'move' ? 0.1 : 0.5;
+  o.stop(audioCtx.currentTime + duration);
+}
+
+function playMoveSound(tileType) {
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  g.gain.setValueAtTime(0.08, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  
+  const soundConfig = {
+    'GO': { freq: 300, type: 'sine' },
+    'GEM5': { freq: 400, type: 'triangle' },
+    'GEM10': { freq: 500, type: 'triangle' },
+    'GEM15': { freq: 600, type: 'triangle' },
+    'HOUSE': { freq: 250, type: 'square' },
+    'RED': { freq: 350, type: 'sawtooth' },
+    'GENIE': { freq: 450, type: 'sine' },
+    'MONSTER': { freq: 200, type: 'square' }
+  };
+  
+  const config = soundConfig[tileType] || { freq: 220, type: 'square' };
+  o.type = config.type;
+  o.frequency.value = config.freq;
+  
+  o.start();
+  o.stop(audioCtx.currentTime + 0.15);
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+}
+
+function showDiceInfo() {
+  document.getElementById('dice-info-box').style.display = 'block';
+}
+
+function showTowerUpgradeModal() {
+  const modal = document.getElementById('tower-upgrade-modal');
+  modal.style.display = 'block';
+}
+
+function closeTowerUpgradeModal() {
+  const modal = document.getElementById('tower-upgrade-modal');
+  modal.style.display = 'none';
+}
+
+function upgradeTower(upgradeLevel) {
+  const requiredDiamonds = upgradeLevel * 10;
+  
+  if (diamonds < requiredDiamonds) {
+    alert(`钻石不够！需要${requiredDiamonds}个钻石，当前只有${diamonds}个钻石`);
+    return;
+  }
+  
+  if (towers.length === 0) {
+    alert('没有炮台可以升级！');
+    return;
+  }
+  
+  diamonds -= requiredDiamonds;
+  diamondsEl.textContent = diamonds;
+  
+  const randomTower = towers[Math.floor(Math.random() * towers.length)];
+  randomTower.level = (randomTower.level || 1) + upgradeLevel;
+  
+  closeTowerUpgradeModal();
+  
+  showUpgradeTip = true;
+  clearTimeout(upgradeTipTimer);
+  drawGrid();
+  upgradeTipTimer = setTimeout(() => {
+    showUpgradeTip = false;
+    drawGrid();
+  }, 1000);
+  
+  if (soundEnabled) playSound('event');
+}
+
+// 触发雷电攻击
+function triggerLightning() {
+  if (!bossMode || monsters.length === 0) return;
+  
+  lightningAttackCount = 0;
+  lightningAttackTimer = 0;
+  
+  // 在最后一次雷电攻击后隐藏金币能量图标和计数器
+  const jinPowerContainer = document.getElementById('jin-power-container');
+  setTimeout(() => {
+    jinPowerContainer.style.display = 'none';
+  }, 5 * 2500); // 等待所有5次雷电攻击完成后隐藏
+  
+  performLightningStrike();
+  
+  console.log('开始雷电连击！将进行5次攻击');
+}
+
+// 执行单次雷电攻击
+function performLightningStrike() {
+  if (lightningAttackCount >= 5 || monsters.length === 0) {
+    return;
+  }
+  
+  lightningAttackCount++;
+  
+  // 更新雷电计数器显示
+  const lightningCounter = document.getElementById('lightning-counter');
+  lightningCounter.textContent = `${5 - lightningAttackCount}/5`;
+  
+  lightningActive = true;
+  lightningFrame = 0;
+  lightningTimer = 0;
+  
+  const lightningSize = 89;
+  
+  // 计算怪物出现的区域范围（游戏板区域加上周围的怪物生成区域）
+  const monsterAreaLeft = boardOffset.x - 50; // 左边界外50像素
+  const monsterAreaRight = boardOffset.x + (tileSize.w + tileGap) * grid[0].length + 50; // 右边界外50像素
+  const monsterAreaTop = boardOffset.y - 50; // 上边界外50像素
+  const monsterAreaBottom = boardOffset.y + (tileSize.h + tileGap) * grid.length + 50; // 下边界外50像素
+  
+  // 确保雷电完全在怪物区域内
+  const minX = Math.max(0, monsterAreaLeft);
+  const maxX = Math.min(canvas.width - lightningSize, monsterAreaRight - lightningSize);
+  const minY = Math.max(0, monsterAreaTop);
+  const maxY = Math.min(canvas.height - lightningSize, monsterAreaBottom - lightningSize);
+  
+  lightningPosition.x = minX + Math.random() * (maxX - minX);
+  lightningPosition.y = minY + Math.random() * (maxY - minY);
+  
+  const hitMonsters = [];
+  monsters.forEach((monster, index) => {
+    if (monster.x >= lightningPosition.x && monster.x <= lightningPosition.x + lightningSize &&
+        monster.y >= lightningPosition.y && monster.y <= lightningPosition.y + lightningSize) {
+      hitMonsters.push({monster, index});
+    }
+  });
+  
+  if (hitMonsters.length > 0) {
+    hitMonsters.sort((a, b) => b.index - a.index);
+    hitMonsters.forEach(({monster, index}) => {
+      const damage = monster.type === 'boss' ? 5 : 50;
+      const goldReward = monster.type === 'boss' ? 0 : 20;
+       
+      if (monster.type === 'boss') {
+        monster.hp -= damage;
+        showDamageNumber(monster.x, monster.y, damage.toString());
+        if (monster.hp <= 0) {
+          monsters.splice(index, 1);
+          gold += 100;
+        }
+      } else {
+        showDamageNumber(monster.x, monster.y, "秒杀");
+        monsters.splice(index, 1);
+        gold += goldReward;
+      }
+    });
+    
+    console.log(`第${lightningAttackCount}次雷电攻击！击中${hitMonsters.length}个小怪`);
+  } else {
+    const monstersToKill = Math.floor(monsters.length * 0.15); // 修改这里的数值来调整击杀百分比，0.2 表示 20%
+    for (let i = 0; i < monstersToKill; i++) {
+      if (monsters.length > 0) {
+        const randomIndex = Math.floor(Math.random() * monsters.length);
+        const monster = monsters[randomIndex];
+        
+        if (monster.type === 'boss') {
+          monster.hp -= 5;
+          showDamageNumber(monster.x, monster.y, "5");
+          if (monster.hp <= 0) {
+            monsters.splice(randomIndex, 1);
+            gold += 100;
+          }
+        } else {
+          showDamageNumber(monster.x, monster.y, "秒杀");
+          monsters.splice(randomIndex, 1);
+          gold += 20;
+        }
+      }
+    }
+    console.log(`第${lightningAttackCount}次雷电攻击！随机击杀${monstersToKill}个小怪`);
+  }
+  
+  goldEl.textContent = gold;
+  
+  if (soundEnabled) playSound('lightning');
+  
+  if (lightningAttackCount < 5 && monsters.length > 0) {
+    setTimeout(() => {
+      performLightningStrike();
+    }, 2500);
+  }
+}
+
+function showLightningButton() {
+  const btn = document.getElementById('lightning-btn');
+  btn.style.display = 'block';
+}
+
+function hideLightningButton() {
+  const btn = document.getElementById('lightning-btn');
+  btn.style.display = 'none';
+}
+
+function useLightning() {
+  if (!bossMode || !hasLightningPower) return;
+  
+  triggerLightning();
+  
+  hasLightningPower = false;
+  hideLightningButton();
+}
+
+// 显示伤害数字
+function showDamageNumber(x, y, damage) {
+  damageNumbers.push({
+    x: x,
+    y: y,
+    damage: damage,
+    opacity: 1.0,
+    timer: 0,
+    offsetY: 0,
+    isKill: damage === "秒杀",
+    isPlayerDamage: damage.toString().startsWith("-")
+  });
+}
+
+// 更新伤害数字动画
+function updateDamageNumbers() {
+  damageNumbers.forEach(dmg => {
+    dmg.timer += 16;
+    dmg.offsetY -= 1;
+    
+    if (dmg.isKill) {
+      dmg.opacity -= 0.008;
+    } else {
+      dmg.opacity -= 0.02;
+    }
+  });
+  
+  damageNumbers = damageNumbers.filter(dmg => dmg.opacity > 0);
+}
+
+// 绘制伤害数字
+function drawDamageNumbers() {
+  damageNumbers.forEach(dmg => {
+    ctx.save();
+    ctx.globalAlpha = dmg.opacity;
+    
+    if (dmg.isKill) {
+      ctx.fillStyle = '#ff0000';
+      ctx.strokeStyle = '#000000';
+      ctx.font = 'bold 24px monospace';
+    } else if (dmg.isPlayerDamage) {
+      ctx.fillStyle = '#ff4444';
+      ctx.strokeStyle = '#000000';
+      ctx.font = 'bold 22px monospace';
+    } else {
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#000000';
+      ctx.font = 'bold 20px monospace';
+    }
+    
+    ctx.lineWidth = 2;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    const displayY = dmg.y + dmg.offsetY;
+    
+    ctx.strokeText(dmg.damage, dmg.x, displayY);
+    ctx.fillText(dmg.damage, dmg.x, displayY);
+    
+    ctx.restore();
+  });
+}
+
+// 绘制雷电动画
+function drawLightning() {
+  lightningTimer += 16;
+  if (lightningTimer > 200) {
+    lightningFrame++;
+    lightningTimer = 0;
+    
+    if (lightningFrame >= 3) {
+      lightningActive = false;
+      lightningFrame = 0;
+      return;
+    }
+  }
+  
+  let canUseLightningImage = false;
+  if (lightningImageLoaded && lightningImages[lightningFrame]) {
+    const img = lightningImages[lightningFrame];
+    canUseLightningImage = img !== null && img.complete && img.naturalWidth > 0;
+  }
+  
+  if (canUseLightningImage) {
+    try {
+      const img = lightningImages[lightningFrame];
+      const lightningSize = 89;
+      
+      ctx.save();
+      ctx.globalAlpha = 0.9;
+      ctx.drawImage(img, lightningPosition.x, lightningPosition.y, lightningSize, lightningSize);
+      ctx.restore();
+    } catch (e) {
+      console.warn('雷电图片绘制失败:', e);
+      drawLightningFallback();
+    }
+  } else {
+    drawLightningFallback();
+  }
+}
+
+// 备用雷电效果
+function drawLightningFallback() {
+  const lightningSize = 89;
+  
+  ctx.save();
+  ctx.globalAlpha = 0.5 + Math.random() * 0.3;
+  ctx.fillStyle = '#ffff00';
+  ctx.fillRect(lightningPosition.x, lightningPosition.y, lightningSize, lightningSize);
+  
+  ctx.globalAlpha = 0.8;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(lightningPosition.x + lightningSize * 0.3, lightningPosition.y);
+  ctx.lineTo(lightningPosition.x + lightningSize * 0.5, lightningPosition.y + lightningSize * 0.4);
+  ctx.lineTo(lightningPosition.x + lightningSize * 0.4, lightningPosition.y + lightningSize * 0.4);
+  ctx.lineTo(lightningPosition.x + lightningSize * 0.7, lightningPosition.y + lightningSize);
+  ctx.stroke();
+  
+  ctx.restore();
+}
+
+function challengeBoss() {
+  bossMode = true;
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('top-right-buttons').style.display = 'none';
+  document.getElementById('challenge-btn').style.display = 'none';
+  
+  playerHP = maxPlayerHP;
+  lastDamageTime = 0;
+  updatePlayerHPBar();
+  
+  if (towers.length === 0) {
+    towers.push({ x: 1, y: 1 });
+  }
+  spawnMonsters();
+  bullets = [];
+  
+  if (hasLightningPower) {
+    setTimeout(() => {
+      triggerLightning();
+      hasLightningPower = false;
+    }, 1000);
+  }
+  
+  animateMonsters();
+  fireLoop();
+}
+
+function spawnMonsters() {
+  monsters = [];
+  const towerAreaCenterX = boardOffset.x + (1.5 * (tileSize.w + tileGap)) + tileSize.w / 2;
+  const towerAreaCenterY = boardOffset.y + (1.5 * (tileSize.h + tileGap)) + tileSize.h / 2;
+  const center = { x: towerAreaCenterX, y: towerAreaCenterY };
+  
+  let normalMonsterCount = 0;
+  let hasBoss = false;
+  
+  switch(wave) {
+    case 1:
+      normalMonsterCount = 5;
+      hasBoss = false;
+      break;
+    case 2:
+      normalMonsterCount = 6;
+      hasBoss = true;
+      break;
+    case 3:
+      normalMonsterCount = 6;
+      hasBoss = true;
+      break;
+    case 4:
+      normalMonsterCount = 6;
+      hasBoss = true;
+      break;
+    case 5:
+      normalMonsterCount = 6;
+      hasBoss = true;
+      break;
+    default:
+      normalMonsterCount = 6;
+      hasBoss = false;
+  }
+  
+  // 生成普通小怪
+  for (let i = 0; i < normalMonsterCount; i++) {
+    // 上边
+    if (i < normalMonsterCount) {
+      monsters.push({ 
+        x: boardOffset.x + ((i % normalMonsterCount) + 1) * (tileSize.w + tileGap) / (normalMonsterCount + 1) * grid[0].length, 
+        y: boardOffset.y - 20, 
+        tx: center.x, 
+        ty: center.y, 
+        hp: 5,
+        type: 'normal',
+        size: 12,
+        inProtectionZone: false
+      });
+    }
+    // 下边
+    if (i < normalMonsterCount) {
+      monsters.push({ 
+        x: boardOffset.x + ((i % normalMonsterCount) + 1) * (tileSize.w + tileGap) / (normalMonsterCount + 1) * grid[0].length, 
+        y: boardOffset.y + (tileSize.h + tileGap) * grid.length + 20, 
+        tx: center.x, 
+        ty: center.y, 
+        hp: 5,
+        type: 'normal',
+        size: 12,
+        inProtectionZone: false
+      });
+    }
+    // 左边
+    if (i < normalMonsterCount) {
+      monsters.push({ 
+        x: boardOffset.x - 20, 
+        y: boardOffset.y + ((i % normalMonsterCount) + 1) * (tileSize.h + tileGap) / (normalMonsterCount + 1) * grid.length, 
+        tx: center.x, 
+        ty: center.y, 
+        hp: 5,
+        type: 'normal',
+        size: 12,
+        inProtectionZone: false
+      });
+    }
+    // 右边
+    if (i < normalMonsterCount) {
+      monsters.push({ 
+        x: boardOffset.x + (tileSize.w + tileGap) * grid[0].length + 20, 
+        y: boardOffset.y + ((i % normalMonsterCount) + 1) * (tileSize.h + tileGap) / (normalMonsterCount + 1) * grid.length, 
+        tx: center.x, 
+        ty: center.y, 
+        hp: 5,
+        type: 'normal',
+        size: 12,
+        inProtectionZone: false
+      });
+    }
+  }
+  
+  // 生成大BOSS
+  if (hasBoss) {
+    let bossCount;
+    switch(wave) {
+      case 2:
+      case 3:
+        bossCount = 1;
+        break;
+      case 4:
+      case 5:
+        bossCount = 2;
+        break;
+      default:
+        bossCount = 1;
+    }
+    for (let i = 0; i < bossCount; i++) {
+      let bossX, bossY;
+      switch(i % 4) {
+        case 0:
+          bossX = boardOffset.x - 30;
+          bossY = boardOffset.y - 30;
+          break;
+        case 1:
+          bossX = boardOffset.x + (tileSize.w + tileGap) * grid[0].length + 30;
+          bossY = boardOffset.y - 30;
+          break;
+        case 2:
+          bossX = boardOffset.x - 30;
+          bossY = boardOffset.y + (tileSize.h + tileGap) * grid.length + 30;
+          break;
+        case 3:
+          bossX = boardOffset.x + (tileSize.w + tileGap) * grid[0].length + 30;
+          bossY = boardOffset.y + (tileSize.h + tileGap) * grid.length + 30;
+          break;
+      }
+      
+      monsters.push({
+        x: bossX,
+        y: bossY,
+        tx: center.x,
+        ty: center.y,
+        hp: 100,
+        type: 'boss',
+        size: 20,
+        inProtectionZone: false
+      });
+    }
+  }
+  
+  console.log(`第${wave}波怪物生成完成：${monsters.filter(m => m.type === 'normal').length}个普通怪物，${monsters.filter(m => m.type === 'boss').length}个BOSS`);
+}
+
+function fireLoop() {
+  if (!bossMode) return;
+  towers.forEach(tower => {
+    const tx = boardOffset.x + tower.x * (tileSize.w + tileGap) + tileSize.w / 2;
+    const ty = boardOffset.y + tower.y * (tileSize.h + tileGap) + tileSize.h / 2;
+    let target = null, minDist = Infinity;
+    monsters.forEach(m => {
+      const dx = m.x - tx, dy = m.y - ty;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < minDist) {
+        minDist = dist;
+        target = m;
+      }
+    });
+    if (target) {
+      // 根据炮台等级设置子弹伤害
+      let damage;
+      switch(tower.level || 1) {
+        case 1: damage = 2; break;
+        case 2: damage = 3; break;
+        case 3: damage = 4; break;
+        case 4: damage = 5; break;
+        default: damage = 5; break; // 4级以上都是5点伤害
+      }
+      bullets.push({
+        x: tx, y: ty,
+        tx: target.x, ty: target.y,
+        speed: 12,
+        damage: damage
+      });
+      bullets.push({
+        x: tx, y: ty,
+        tx: target.x, ty: target.y,
+        speed: 12,
+        damage: damage  // 添加炮台等级作为伤害值
+      });
+      console.log(`等级${tower.level}炮台发射子弹，伤害：${damage}`);
+    }
+  });
+  setTimeout(fireLoop, 800);
+}
+
+function updateBullets() {
+  let goldEarned = 0;
+  bullets.forEach(bullet => {
+    let hitMonster = null;
+    monsters.forEach(m => {
+      const dx = m.x - bullet.x;
+      const dy = m.y - bullet.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const monsterRadius = m.size || 12;
+      if (dist < monsterRadius + 2 && !hitMonster) {
+        hitMonster = m;
+      }
+    });
+    if (hitMonster) {
+      const damage = bullet.damage || 1;  // 使用子弹的伤害值，默认为1
+      hitMonster.hp -= damage;
+      bullet.hit = true;
+      showDamageNumber(hitMonster.x, hitMonster.y, damage.toString());
+      console.log(`子弹击中${hitMonster.type === 'boss' ? 'BOSS' : '怪物'}，造成${damage}点伤害，剩余血量：${hitMonster.hp}`);
+      if (hitMonster.hp <= 0) {
+        const goldReward = hitMonster.type === 'boss' ? 100 : 20;
+        goldEarned += goldReward;
+      }
+    }
+    const dx = bullet.tx - bullet.x;
+    const dy = bullet.ty - bullet.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > bullet.speed && !bullet.hit) {
+      bullet.x += (dx / dist) * bullet.speed;
+      bullet.y += (dy / dist) * bullet.speed;
+    } else {
+      bullet.x = bullet.tx;
+      bullet.y = bullet.ty;
+      bullet.hit = true;
+    }
+  });
+  
+  monsters = monsters.filter(m => m.hp > 0);
+  bullets = bullets.filter(b => !b.hit);
+  
+  if (goldEarned > 0) {
+    gold += goldEarned;
+    goldEl.textContent = gold;
+  }
+  
+  if (bossMode && monsters.length === 0) {
+    // 每波完成都显示胜利弹框
+    bossMode = false;
+    document.getElementById('victory-modal').style.display = 'flex';
+    
+    setTimeout(() => {
+      document.getElementById('victory-modal').style.display = 'none';
+      document.getElementById('controls').style.display = 'flex';
+      document.getElementById('top-right-buttons').style.display = 'flex';
+      document.getElementById('challenge-btn').style.display = 'none';
+      
+      if (wave < 5) {
+        // 前4波完成 - 进入下一波
+        wave++;
+        waveEl.textContent = `${wave}/5`;
+        console.log(`第${wave-1}波完成！当前波次：${wave}/5`);
+      } else {
+        // 第5波完成 - 保持在第5波，不重置资源
+        console.log('第5波完成！游戏胜利！');
+      }
+      
+      drawGrid();
+    }, 2500);
+  }
+}
+
+function animateMonsters() {
+  if (!bossMode) return;
+  let allArrived = true;
+  
+  monsters.forEach(m => {
+    // 检查怪物是否碰到保护区边界（包括怪物半径）
+    const protectionLeft = boardOffset.x + 1 * (tileSize.w + tileGap);
+    const protectionTop = boardOffset.y + 1 * (tileSize.h + tileGap);
+    const protectionWidth = 2 * tileSize.w + tileGap;
+    const protectionHeight = 2 * tileSize.h + tileGap;
+    const protectionRight = protectionLeft + protectionWidth;
+    const protectionBottom = protectionTop + protectionHeight;
+    
+    // 考虑怪物半径，检查是否碰到保护区边界
+    const monsterRadius = m.size || 12;
+    const wasInProtectionZone = m.inProtectionZone;
+    m.inProtectionZone = (m.x + monsterRadius >= protectionLeft && m.x - monsterRadius <= protectionRight &&
+                         m.y + monsterRadius >= protectionTop && m.y - monsterRadius <= protectionBottom);
+    
+    // 如果怪物碰到保护区边界，停止移动
+    if (m.inProtectionZone) {
+      if (!wasInProtectionZone) {
+        console.log(`${m.type === 'boss' ? 'BOSS' : '怪物'}碰到保护区边界，停止移动！位置: (${m.x.toFixed(1)}, ${m.y.toFixed(1)})`);
+        console.log(`保护区范围: Left=${protectionLeft}, Right=${protectionRight}, Top=${protectionTop}, Bottom=${protectionBottom}`);
+        
+        // BOSS碰到边界时播放技能动画
+        if (m.type === 'boss') {
+          isPlayingSkill = true;
+          skillAnimationFrame = 0;
+          skillAnimationTimer = 0;
+          skillPosition.x = m.x;
+          skillPosition.y = m.y;
+          if (soundEnabled) playSound('event');
+        }
+      }
+      // 碰到保护区边界就不移动，但继续处理其他怪物
+      return; // 这里使用return只会跳出当前怪物的处理，继续处理下一个怪物
+    }
+    
+    // 只有不在保护区的怪物才移动
+    const dx = m.tx - m.x;
+    const dy = m.ty - m.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > 2) {
+      m.x += dx * 0.001;
+      m.y += dy * 0.001;
+      allArrived = false;
+    } else {
+      m.x = m.tx;
+      m.y = m.ty;
+    }
+  });
+  
+  // 检查怪物与炮台区域的碰撞（扣血逻辑）
+  checkMonsterTowerCollision();
+  
+  updateBullets();
+  updatePlayerHPBar();
+  drawGrid();
+  if (!allArrived || bossMode) {
+    requestAnimationFrame(animateMonsters);
+  }
+}
+
+// 检查怪物与炮台保护区的碰撞
+function checkMonsterTowerCollision() {
+  const currentTime = Date.now();
+  
+  // 检查是否有怪物碰到保护区边界
+  let hasMonsterTouchingProtection = false;
+  monsters.forEach(m => {
+    if (m.inProtectionZone) {
+      hasMonsterTouchingProtection = true;
+    }
+  });
+  
+  // 如果有怪物碰到保护区边界，且距离上次扣血超过500ms，则扣血
+  if (hasMonsterTouchingProtection && currentTime - lastDamageTime > 500) {
+    playerHP -= 5;
+    lastDamageTime = currentTime;
+    
+    // 在保护区中心显示伤害数字
+    const protectionCenterX = boardOffset.x + 1.5 * (tileSize.w + tileGap) + tileSize.w / 2;
+    const protectionCenterY = boardOffset.y + 1.5 * (tileSize.h + tileGap) + tileSize.h / 2;
+    showDamageNumber(protectionCenterX, protectionCenterY - 30, "-5");
+    
+    if (soundEnabled) playSound('damage');
+    
+    console.log(`角色受到伤害！怪物碰到保护区边界！当前血量：${playerHP}/${maxPlayerHP}`);
+    
+    if (playerHP <= 0) {
+      playerHP = 0;
+      gameOver();
+    }
+  }
+}
+
+// 游戏失败处理
+function gameOver() {
+  bossMode = false;
+  towers.length = 0; // 游戏结束时清空炮台
+  
+  const gameOverModal = document.createElement('div');
+  gameOverModal.id = 'game-over-modal';
+  gameOverModal.style.cssText = `
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  `;
+  
+  gameOverModal.innerHTML = `
+    <div style="background:#222;padding:40px 60px;border-radius:20px;box-shadow:0 0 30px #000;text-align:center;border:3px solid #f44336;">
+      <h1 style="color:#f44336;margin:0 0 20px 0;">游戏失败！</h1>
+      <p style="color:#fff;font-size:20px;margin-bottom:30px;">角色血量耗尽</p>
+      <button onclick="restartGame()" style="padding:12px 24px;background:#4caf50;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;">重新开始</button>
+    </div>
+  `;
+  
+  document.body.appendChild(gameOverModal);
+  
+  console.log('游戏失败！');
+}
+
+// 重新开始游戏
+function restartGame() {
+  // 移除游戏失败弹框
+  const gameOverModal = document.getElementById('game-over-modal');
+  if (gameOverModal) {
+    gameOverModal.remove();
+  }
+  
+  // 重置所有游戏资源
+  playerHP = maxPlayerHP;
+  wave = 1;
+  waveEl.textContent = `${wave}/5`;
+  gold = 600; // 重置初始金币
+  goldEl.textContent = gold;
+  diamonds = 0; // 重置初始钻石
+  diamondsEl.textContent = diamonds;
+  monsters = [];
+  bullets = [];
+  towers.length = 0; // 清空炮台数组
+  bossMode = false;
+  nextGenieWave = 5; // 重置GENIE必定触发波次（从第2波开始）
+  hasLightningPower = false; // 重置雷电能力
+  player = { x: 0, y: 0 }; // 重置英雄位置到起点
+  isPlayerMoving = false; // 重置移动状态
+  moveStepsRemaining = 0; // 重置剩余移动步数
+  
+  // 重置界面显示
+  document.getElementById('controls').style.display = 'flex';
+  document.getElementById('top-right-buttons').style.display = 'flex';
+  document.getElementById('challenge-btn').style.display = 'none';
+  document.getElementById('lightning-btn').style.display = 'none';
+  
+  // 更新显示
+  updatePlayerHPBar();
+  updateChallengeButton();
+  drawGrid();
+  
+  console.log('游戏重新开始，所有资源已重置');
+}
+
+function animatePlayer() {
+  if (!bossMode) {
+    drawGrid();
+  }
+  requestAnimationFrame(animatePlayer);
+}
+
+window.onload = function() {
+  document.getElementById('controls').style.display = 'flex';
+  document.getElementById('top-right-buttons').style.display = 'flex';
+  bossMode = false;
+  updateChallengeButton();
+  drawGrid();
+  animatePlayer();
+};
+</script>
+
+<div id="dice-info-box" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);padding:30px 40px;border-radius:10px;border:2px solid #888;color:white;font-size:18px;z-index:2000;text-align:center;">
+  <div style="margin-bottom:20px;font-size:20px;font-weight:bold;">骰子英雄概率</div>
+  <div>普通骰子英雄概率：<strong>10%</strong></div>
+  <div>精英骰子英雄概率：<strong>10%</strong></div>
+  <div>万能骰子英雄概率：<strong>60%</strong></div>
+  <button onclick="document.getElementById('dice-info-box').style.display='none'" style="margin-top:20px;padding:8px 16px;background:#444;border:1px solid #888;color:white;border-radius:5px;cursor:pointer;">关闭</button>
+</div>
+
+</body>
+</html>
