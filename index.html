@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Roll War - 8bit AI Demo</title>
   <style>
     html, body {
@@ -15,6 +15,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      overflow-x: hidden;
     }
     #game-wrapper {
       border: 6px solid #444;
@@ -29,6 +30,12 @@
       justify-content: center;
       box-shadow: 0 0 30px #000;
       position: relative;
+    }
+    @media screen and (max-width: 720px) {
+      #game-wrapper {
+        transform: scale(0.9);
+        transform-origin: center center;
+      }
     }
     #game {
       image-rendering: pixelated;
@@ -217,6 +224,7 @@
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -238,13 +246,13 @@ const boardW = tileSize.w * grid[0].length + tileGap * (grid[0].length - 1);
 const boardH = tileSize.h * grid.length + tileGap * (grid.length - 1);
 const boardOffset = { x: 0, y: (382 - boardH) / 2 + 50 };
 let player = { x: 0, y: 0 };
-let gold = 600; // 初始金币
-let diamonds = 0;
+let gold = GAME_CONFIG.initial.gold;
+let diamonds = GAME_CONFIG.initial.diamonds;
 let aiMode = true;
 let soundEnabled = true;
-let wave = 1;
-let playerHP = 100;
-let maxPlayerHP = 100;
+let wave = GAME_CONFIG.initial.wave;
+let playerHP = GAME_CONFIG.initial.playerHP;
+let maxPlayerHP = GAME_CONFIG.initial.maxPlayerHP;
 let lastDamageTime = 0;
 const towers = [];
 let lastRoll = null;
@@ -886,7 +894,7 @@ function rollDice(type) {
   lastDiceType = type;
   if (isDiceRolling || isPlayerMoving) return;
 
-  const cost = { normal: 100, elite: 150, universal: 300 }[type];
+  const cost = GAME_CONFIG.diceCost[type];
   const diceImg = document.getElementById('dice-img');
   const adTip = document.getElementById('ad-tip');
 
@@ -1224,7 +1232,7 @@ function closeTowerUpgradeModal() {
 }
 
 function upgradeTower(upgradeLevel) {
-  const requiredDiamonds = upgradeLevel * 10;
+  const requiredDiamonds = GAME_CONFIG.tower.upgradeCost[`level${upgradeLevel}`];
   
   if (diamonds < requiredDiamonds) {
     alert(`钻石不够！需要${requiredDiamonds}个钻石，当前只有${diamonds}个钻石`);
@@ -1937,9 +1945,9 @@ function restartGame() {
   playerHP = maxPlayerHP;
   wave = 1;
   waveEl.textContent = `${wave}/5`;
-  gold = 600; // 重置初始金币
+  gold = GAME_CONFIG.initial.gold; // 重置初始金币
   goldEl.textContent = gold;
-  diamonds = 0; // 重置初始钻石
+  diamonds = GAME_CONFIG.initial.diamonds; // 重置初始钻石
   diamondsEl.textContent = diamonds;
   monsters = [];
   bullets = [];
