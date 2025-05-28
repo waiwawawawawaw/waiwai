@@ -15,7 +15,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      overflow-x: hidden;
+      overflow: hidden;
     }
     #game-wrapper {
       border: 6px solid #444;
@@ -23,7 +23,7 @@
       background: #111 url(bg.jpg) no-repeat center center;
       background-size: cover;
       width: 720px;
-      height: 1280px;
+      height: 1380px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -161,26 +161,41 @@
 </div>
 
 <div id="tower-upgrade-modal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);padding:30px 40px;border-radius:15px;border:2px solid #9C27B0;color:white;font-size:20px;z-index:1000;text-align:center;">
-  <div style="margin-bottom:20px;font-size:24px;color:#9C27B0;">炮台升级选择</div>
+  <div style="margin-bottom:20px;font-size:24px;color:#9C27B0;">角色升级选择</div>
   <div style="margin-bottom:20px;">选择升级等级，消耗对应钻石</div>
   <div style="display:flex;gap:15px;justify-content:center;">
     <button onclick="upgradeTower(1)" style="padding:10px 20px;background:#4CAF50;border:none;color:white;border-radius:5px;cursor:pointer;font-size:14px;">升级1级<br>(10钻石)</button>
     <button onclick="upgradeTower(2)" style="padding:10px 20px;background:#2196F3;border:none;color:white;border-radius:5px;cursor:pointer;font-size:14px;">升级2级<br>(20钻石)</button>
     <button onclick="upgradeTower(3)" style="padding:10px 20px;background:#FF9800;border:none;color:white;border-radius:5px;cursor:pointer;font-size:14px;">升级3级<br>(30钻石)</button>
   </div>
-  <button onclick="closeTowerUpgradeModal()" style="margin-top:15px;padding:8px 16px;background:#666;border:none;color:white;border-radius:5px;cursor:pointer;">取消</button>
+  <button onclick="closeTowerUpgradeModal()" style="margin-top:65px;padding:8px 16px;background:#666;border:none;color:white;border-radius:5px;cursor:pointer;">取消</button>
+</div>
+
+<div id="wave5-choice-modal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.9);padding:80px 40px;border-radius:15px;border:2px solid #FFD700;color:white;font-size:20px;z-index:1000;text-align:center;">
+  <div style="margin-bottom:20px;font-size:24px;color:#FFD700;">第五波胜利奖励</div>
+  <div style="margin-bottom:20px;">选择一项奖励</div>
+  <div style="display:flex;gap:20px;justify-content:center;">
+          <button onclick="wave5Reward('hp')" style="padding:15px 25px;background:#4CAF50;border:none;color:white;border-radius:8px;cursor:pointer;font-size:16px;">
+        <div>增加50血量</div>
+        <div style="font-size:14px;margin-top:5px;">+50血量</div>
+      </button>
+      <button onclick="wave5Reward('tower')" style="padding:15px 25px;background:#2196F3;border:none;color:white;border-radius:8px;cursor:pointer;font-size:16px;">
+        <div>随机英雄+1级</div>
+        <div style="font-size:14px;margin-top:5px;">随机一个英雄+1级</div>
+      </button>
+  </div>
 </div>
 
 <div id="game-wrapper">
   <div id="top-right-buttons">
-    <button onclick="showDiceInfo()">提示</button>
     <button onclick="toggleSound()">音乐</button>
+    <button onclick="showDiceInfo()">提示</button>
   </div>
   <div id="jin-power-container" style="display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:calc(50% + 200px); z-index:1000; text-align:center;">
     <img id="jin-power-img" src="jin.png" style="width:48px; height:48px;">
     <div id="lightning-counter" style="color:#FFD700; font-size:16px; font-weight:bold; margin-top:5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">5/5</div>
   </div>
-  <canvas id="game" width="420" height="764"></canvas>
+  <canvas id="game" width="520" height="864"></canvas>
   <img id="dice-img" style="display:none; position:absolute; left:50%; top:50%; transform:translate(-50%, 100px); width:48px; height:48px; z-index:2000;">
   <div id="ad-tip" style="display:none; position:absolute; left:50%; top:50%; transform:translate(-50%, 200px); font-size:30px; color:#e72931; font-weight:bold; z-index:2000; text-align:center;">
     <div style="margin:15px auto 0 auto; width:120px; height:60px; background:#111; border-radius:2px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px;">
@@ -196,9 +211,8 @@
     </div>
   </div>
   <div id="controls">
-    <button onclick="rollDice('normal')">普通骰子（100）</button>
-    <button onclick="rollDice('elite')">精英骰子（150）</button>
-    <button onclick="rollDice('universal')">万能骰子（300）</button>
+    <button onclick="rollDice('normal')">普通骰子（<span id="normal-cost">100</span>）</button>
+    <button onclick="rollDice('universal')">万能骰子（<span id="universal-cost">200</span>）</button>
   </div>
 </div>
 
@@ -244,7 +258,7 @@ const tileSize = { w: 58, h: 53 };
 const tileGap = 6;
 const boardW = tileSize.w * grid[0].length + tileGap * (grid[0].length - 1);
 const boardH = tileSize.h * grid.length + tileGap * (grid.length - 1);
-const boardOffset = { x: 0, y: (382 - boardH) / 2 + 50 };
+const boardOffset = { x: 50, y: (432 - boardH) / 2 + 100 }; // 增加y偏移量50像素
 let player = { x: 0, y: 0 };
 let gold = GAME_CONFIG.initial.gold;
 let diamonds = GAME_CONFIG.initial.diamonds;
@@ -253,6 +267,7 @@ let soundEnabled = true;
 let wave = GAME_CONFIG.initial.wave;
 let playerHP = GAME_CONFIG.initial.playerHP;
 let maxPlayerHP = GAME_CONFIG.initial.maxPlayerHP;
+let cycle = GAME_CONFIG.initial.cycle;  // 添加轮回计数器
 let lastDamageTime = 0;
 const towers = [];
 let lastRoll = null;
@@ -851,7 +866,8 @@ function drawGrid() {
         ctx.fillStyle = '#333';
         ctx.fillRect(barX, barY, barWidth, barHeight);
         
-        const hpPercent = m.hp / 100;
+        const maxBossHP = GAME_CONFIG.monster.boss.waveHP[wave] || 100;
+        const hpPercent = m.hp / maxBossHP;
         ctx.fillStyle = hpPercent > 0.5 ? '#4caf50' : hpPercent > 0.2 ? '#ff9800' : '#f44336';
         ctx.fillRect(barX, barY, barWidth * hpPercent, barHeight);
         
@@ -863,7 +879,7 @@ function drawGrid() {
         ctx.font = 'bold 12px monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${m.hp}/100`, m.x, barY - 8);
+        ctx.fillText(`${m.hp}/${maxBossHP}`, m.x, barY - 8);
       }
     });
   }
@@ -911,6 +927,7 @@ function rollDice(type) {
   gold -= cost;
   goldEl.textContent = gold;
   updateChallengeButton();
+  updateDiceButtons();
 
   const path = [
     [0,0], [1,0], [2,0], [3,0],
@@ -923,7 +940,6 @@ function rollDice(type) {
   // GEM10格子概率加成机制
   const gem10Chance = {
     normal: 0.1,    // 普通骰子：10%概率
-    elite: 0.5,    // 精英骰子：50%概率
     universal: 1.0  // 万能骰子：100%概率
   };
 
@@ -953,7 +969,6 @@ function rollDice(type) {
   // HOUSE格子概率加成机制
   const houseChance = {
     normal: 0.1,    // 普通骰子：10%概率
-    elite: 0.5,    // 精英骰子：50%概率
     universal: 1.0  // 万能骰子：100%概率
   };
 
@@ -983,7 +998,6 @@ function rollDice(type) {
   // GENIE格子概率加成机制
   const genieChance = {
     normal: wave >= nextGenieWave ? 1.0 : 0.1,    // 普通骰子：必定触发波次100%，否则10%
-    elite: wave >= nextGenieWave ? 1.0 : 0.35,    // 精英骰子：必定触发波次100%，否则35%
     universal: wave >= nextGenieWave ? 1.0 : 0.5  // 万能骰子：必定触发波次100%，否则50%
   };
 
@@ -1082,7 +1096,7 @@ function movePlayerOneStep() {
 }
 
 function handleTile(tile) {
-  if (tile.startsWith('GEM')) {
+  if (tile.startsWith('GEM') && tile !== 'GEM10') {
     const amount = parseInt(tile.replace('GEM', ''));
     gold += amount;
     goldEl.textContent = gold;
@@ -1109,12 +1123,9 @@ function handleTile(tile) {
   }
   
   if (tile === 'GEM10') {
-    // 额外奖励：+5钻石和100金币
+    // 额外奖励：+5钻石
     diamonds += 5;
     diamondsEl.textContent = diamonds;
-    gold += 100;
-    goldEl.textContent = gold;
-    updateChallengeButton();
     
     const modal = document.getElementById('gem10-modal');
     modal.style.display = 'block';
@@ -1133,34 +1144,32 @@ function handleTile(tile) {
       console.log('获得雷电能力！进入BOSS模式时将自动触发雷电攻击');
     }
     
-    console.log(`停在GEM10格子！获得100金币 + 5钻石 + 雷电能力`);
+    console.log(`停在GEM10格子！获得5钻石 + 雷电能力`);
   }
 }
 
 function addTowerToCenter() {
-  const centerPositions = [
-    { x: 1, y: 1 }, { x: 2, y: 1 },
-    { x: 1, y: 2 }, { x: 2, y: 2 }
-  ];
-  const available = centerPositions.filter(pos =>
-    !towers.some(t => t.x === pos.x && t.y === pos.y)
-  );
-  if (available.length > 0) {
-    const spot = available[Math.floor(Math.random() * available.length)];
-    towers.push({ ...spot, level: 1 });
+  // 固定的炮台位置：左上角
+  const defaultPosition = { x: 1, y: 1 };
+  
+  // 检查左上角位置是否已有炮台
+  const existingTower = towers.find(t => t.x === defaultPosition.x && t.y === defaultPosition.y);
+  
+  if (!existingTower) {
+    // 添加新炮台到左上角
+    towers.push({ ...defaultPosition, level: 1 });
+    console.log(`添加新炮台到固定位置(${defaultPosition.x}, ${defaultPosition.y})`);
   } else {
-    const spot = centerPositions[Math.floor(Math.random() * centerPositions.length)];
-    const tower = towers.find(t => t.x === spot.x && t.y === spot.y);
-    if (tower) {
-      tower.level = (tower.level || 1) + 1;
-      showUpgradeTip = true;
-      clearTimeout(upgradeTipTimer);
+    // 升级现有炮台
+    existingTower.level = (existingTower.level || 1) + 1;
+    showUpgradeTip = true;
+    clearTimeout(upgradeTipTimer);
+    drawGrid();
+    upgradeTipTimer = setTimeout(() => {
+      showUpgradeTip = false;
       drawGrid();
-      upgradeTipTimer = setTimeout(() => {
-        showUpgradeTip = false;
-        drawGrid();
-      }, 1000);
-    }
+    }, 1000);
+    console.log(`升级固定位置(${defaultPosition.x}, ${defaultPosition.y})的炮台到${existingTower.level}级`);
   }
 }
 
@@ -1341,6 +1350,9 @@ function performLightningStrike() {
         gold += goldReward;
       }
     });
+    
+    goldEl.textContent = gold;
+    updateDiceButtons();
     
     console.log(`第${lightningAttackCount}次雷电攻击！击中${hitMonsters.length}个小怪`);
   } else {
@@ -1530,9 +1542,12 @@ function challengeBoss() {
   lastDamageTime = 0;
   updatePlayerHPBar();
   
+  // 如果没有炮台，添加一个初始炮台到左上角位置
   if (towers.length === 0) {
-    towers.push({ x: 1, y: 1 });
+    towers.push({ x: 1, y: 1, level: 1 });
+    console.log('BOSS战：添加初始炮台到位置(1, 1)');
   }
+  
   spawnMonsters();
   bullets = [];
   
@@ -1566,79 +1581,78 @@ function spawnMonsters() {
       hasBoss = true;
       break;
     case 3:
-      normalMonsterCount = 6;
+      normalMonsterCount = 7;
       hasBoss = true;
       break;
     case 4:
-      normalMonsterCount = 6;
+      normalMonsterCount = 7;
       hasBoss = true;
       break;
     case 5:
-      normalMonsterCount = 6;
+      normalMonsterCount = 7;
       hasBoss = true;
       break;
     default:
-      normalMonsterCount = 6;
-      hasBoss = false;
+      normalMonsterCount = 8;
+      hasBoss = true;
   }
+
+  // 计算当前轮回的怪物血量倍率
+  const monsterHPMultiplier = Math.pow(GAME_CONFIG.cycle.monsterHPMultiplier, cycle - 1);
+  const bossHPMultiplier = Math.pow(GAME_CONFIG.cycle.bossHPMultiplier, cycle - 1);
+  
+  // 计算普通怪物的实际血量
+  const normalMonsterHP = Math.ceil(GAME_CONFIG.monster.normal.baseHP * monsterHPMultiplier);
   
   // 生成普通小怪
   for (let i = 0; i < normalMonsterCount; i++) {
     // 上边
-    if (i < normalMonsterCount) {
-      monsters.push({ 
-        x: boardOffset.x + ((i % normalMonsterCount) + 1) * (tileSize.w + tileGap) / (normalMonsterCount + 1) * grid[0].length, 
-        y: boardOffset.y - 20, 
-        tx: center.x, 
-        ty: center.y, 
-        hp: 5,
-        type: 'normal',
-        size: 12,
-        inProtectionZone: false
-      });
-    }
+    monsters.push({ 
+      x: boardOffset.x + ((i % normalMonsterCount) + 1) * (tileSize.w + tileGap) / (normalMonsterCount + 1) * grid[0].length, 
+      y: boardOffset.y - 20, 
+      tx: center.x, 
+      ty: center.y, 
+      hp: normalMonsterHP,
+      type: 'normal',
+      size: GAME_CONFIG.monster.normal.size,
+      inProtectionZone: false
+    });
     // 下边
-    if (i < normalMonsterCount) {
-      monsters.push({ 
-        x: boardOffset.x + ((i % normalMonsterCount) + 1) * (tileSize.w + tileGap) / (normalMonsterCount + 1) * grid[0].length, 
-        y: boardOffset.y + (tileSize.h + tileGap) * grid.length + 20, 
-        tx: center.x, 
-        ty: center.y, 
-        hp: 5,
-        type: 'normal',
-        size: 12,
-        inProtectionZone: false
-      });
-    }
+    monsters.push({ 
+      x: boardOffset.x + ((i % normalMonsterCount) + 1) * (tileSize.w + tileGap) / (normalMonsterCount + 1) * grid[0].length, 
+      y: boardOffset.y + (tileSize.h + tileGap) * grid.length + 20, 
+      tx: center.x, 
+      ty: center.y, 
+      hp: normalMonsterHP,
+      type: 'normal',
+      size: GAME_CONFIG.monster.normal.size,
+      inProtectionZone: false
+    });
     // 左边
-    if (i < normalMonsterCount) {
-      monsters.push({ 
-        x: boardOffset.x - 20, 
-        y: boardOffset.y + ((i % normalMonsterCount) + 1) * (tileSize.h + tileGap) / (normalMonsterCount + 1) * grid.length, 
-        tx: center.x, 
-        ty: center.y, 
-        hp: 5,
-        type: 'normal',
-        size: 12,
-        inProtectionZone: false
-      });
-    }
+    monsters.push({ 
+      x: boardOffset.x - 20, 
+      y: boardOffset.y + ((i % normalMonsterCount) + 1) * (tileSize.h + tileGap) / (normalMonsterCount + 1) * grid.length, 
+      tx: center.x, 
+      ty: center.y, 
+      hp: normalMonsterHP,
+      type: 'normal',
+      size: GAME_CONFIG.monster.normal.size,
+      inProtectionZone: false
+    });
     // 右边
-    if (i < normalMonsterCount) {
-      monsters.push({ 
-        x: boardOffset.x + (tileSize.w + tileGap) * grid[0].length + 20, 
-        y: boardOffset.y + ((i % normalMonsterCount) + 1) * (tileSize.h + tileGap) / (normalMonsterCount + 1) * grid.length, 
-        tx: center.x, 
-        ty: center.y, 
-        hp: 5,
-        type: 'normal',
-        size: 12,
-        inProtectionZone: false
-      });
-    }
+    monsters.push({ 
+      x: boardOffset.x + (tileSize.w + tileGap) * grid[0].length + 20, 
+      y: boardOffset.y + ((i % normalMonsterCount) + 1) * (tileSize.h + tileGap) / (normalMonsterCount + 1) * grid.length, 
+      tx: center.x, 
+      ty: center.y, 
+      hp: normalMonsterHP,
+      type: 'normal',
+      size: GAME_CONFIG.monster.normal.size,
+      inProtectionZone: false
+    });
   }
   
-  // 生成大BOSS
+  // 生成BOSS
   if (hasBoss) {
     let bossCount;
     switch(wave) {
@@ -1651,8 +1665,13 @@ function spawnMonsters() {
         bossCount = 2;
         break;
       default:
-        bossCount = 1;
+        bossCount = 3;
     }
+
+    // 计算当前波次BOSS的实际血量
+    const baseBossHP = GAME_CONFIG.monster.boss.baseWaveHP[wave] || 100;
+    const actualBossHP = Math.ceil(baseBossHP * bossHPMultiplier);
+    
     for (let i = 0; i < bossCount; i++) {
       let bossX, bossY;
       switch(i % 4) {
@@ -1679,15 +1698,19 @@ function spawnMonsters() {
         y: bossY,
         tx: center.x,
         ty: center.y,
-        hp: 100,
+        hp: actualBossHP,
         type: 'boss',
-        size: 20,
+        size: GAME_CONFIG.monster.boss.size,
         inProtectionZone: false
       });
     }
   }
   
-  console.log(`第${wave}波怪物生成完成：${monsters.filter(m => m.type === 'normal').length}个普通怪物，${monsters.filter(m => m.type === 'boss').length}个BOSS`);
+  const normalCount = monsters.filter(m => m.type === 'normal').length;
+  const bossCount = monsters.filter(m => m.type === 'boss').length;
+  console.log(`第${cycle}轮第${wave}波怪物生成完成：
+    普通怪物：${normalCount}个，血量：${normalMonsterHP}
+    BOSS：${bossCount}个，血量：${hasBoss ? actualBossHP : 0}`);
 }
 
 function fireLoop() {
@@ -1775,27 +1798,36 @@ function updateBullets() {
   if (goldEarned > 0) {
     gold += goldEarned;
     goldEl.textContent = gold;
+    updateDiceButtons();
   }
   
   if (bossMode && monsters.length === 0) {
-    // 每波完成都显示胜利弹框
     bossMode = false;
     document.getElementById('victory-modal').style.display = 'flex';
     
     setTimeout(() => {
       document.getElementById('victory-modal').style.display = 'none';
-      document.getElementById('controls').style.display = 'flex';
-      document.getElementById('top-right-buttons').style.display = 'flex';
-      document.getElementById('challenge-btn').style.display = 'none';
       
-      if (wave < 5) {
-        // 前4波完成 - 进入下一波
-        wave++;
-        waveEl.textContent = `${wave}/5`;
-        console.log(`第${wave-1}波完成！当前波次：${wave}/5`);
+      if (wave === GAME_CONFIG.initial.maxWave) {
+        // 每轮最后一波结束时显示选择奖励模态框
+        setTimeout(() => {
+          document.getElementById('wave5-choice-modal').style.display = 'block';
+          // 动态显示血量数值
+          const hpButton = document.querySelector('#wave5-choice-modal button:first-child div:last-child');
+          const currentHP = maxPlayerHP;
+          const newHP = currentHP + 50;
+          hpButton.textContent = `+50血量 (${currentHP} → ${newHP})`;
+          console.log(`第${cycle}轮第${wave}波完成！显示奖励选择`);
+        }, 1500);
       } else {
-        // 第5波完成 - 保持在第5波，不重置资源
-        console.log('第5波完成！游戏胜利！');
+        // 其他波次正常处理
+        document.getElementById('controls').style.display = 'flex';
+        document.getElementById('top-right-buttons').style.display = 'flex';
+        document.getElementById('challenge-btn').style.display = 'none';
+        
+        wave++;
+        waveEl.textContent = `${wave}/${GAME_CONFIG.initial.maxWave} (轮回${cycle})`;
+        console.log(`第${cycle}轮第${wave-1}波完成！当前波次：${wave}/${GAME_CONFIG.initial.maxWave}`);
       }
       
       drawGrid();
@@ -1943,10 +1975,11 @@ function restartGame() {
   
   // 重置所有游戏资源
   playerHP = maxPlayerHP;
-  wave = 1;
-  waveEl.textContent = `${wave}/5`;
+  wave = GAME_CONFIG.initial.wave;
+  waveEl.textContent = `${wave}/${GAME_CONFIG.initial.maxWave} (轮回${cycle})`;
   gold = GAME_CONFIG.initial.gold; // 重置初始金币
   goldEl.textContent = gold;
+  updateDiceButtons();
   diamonds = GAME_CONFIG.initial.diamonds; // 重置初始钻石
   diamondsEl.textContent = diamonds;
   monsters = [];
@@ -1970,30 +2003,146 @@ function restartGame() {
   updateChallengeButton();
   drawGrid();
   
+  // 重置轮回相关数据
+  cycle = GAME_CONFIG.initial.cycle;
+  
   console.log('游戏重新开始，所有资源已重置');
 }
 
 function animatePlayer() {
   if (!bossMode) {
     drawGrid();
+    updateDiceButtons(); // 在每帧更新按钮状态
   }
   requestAnimationFrame(animatePlayer);
+}
+
+function updateDiceButtons() {
+  const normalCost = document.getElementById('normal-cost');
+  const universalCost = document.getElementById('universal-cost');
+  
+  // 更新普通骰子按钮
+  if (gold < 100) {
+    normalCost.style.color = '#ff4444';
+  } else {
+    normalCost.style.color = 'white';
+  }
+  
+  // 更新万能骰子按钮
+  if (gold < 200) {
+    universalCost.style.color = '#ff4444';
+  } else {
+    universalCost.style.color = 'white';
+  }
 }
 
 window.onload = function() {
   document.getElementById('controls').style.display = 'flex';
   document.getElementById('top-right-buttons').style.display = 'flex';
   bossMode = false;
+  waveEl.textContent = `${wave}/${GAME_CONFIG.initial.maxWave} (轮回${cycle})`;
   updateChallengeButton();
+  updateDiceButtons();
   drawGrid();
   animatePlayer();
 };
+
+function wave5Reward(choice) {
+  if (choice === 'hp') {
+    const oldMaxHP = maxPlayerHP;
+    maxPlayerHP += 50;
+    playerHP = maxPlayerHP;
+    updatePlayerHPBar();
+    if (soundEnabled) playSound('event');
+    console.log(`选择增加血量：最大血量从${oldMaxHP}增加到${maxPlayerHP}`);
+  } else if (choice === 'tower') {
+    if (towers.length > 0) {
+      const randomIndex = Math.floor(Math.random() * towers.length);
+      const selectedTower = towers[randomIndex];
+      selectedTower.level = (selectedTower.level || 1) + 1;
+      if (soundEnabled) playSound('event');
+      console.log(`选择升级炮台：随机炮台升级到${selectedTower.level}级`);
+      
+      showUpgradeTip = true;
+      clearTimeout(upgradeTipTimer);
+      drawGrid();
+      upgradeTipTimer = setTimeout(() => {
+        showUpgradeTip = false;
+        drawGrid();
+      }, 1000);
+    }
+  }
+  
+  // 关闭模态框
+  document.getElementById('wave5-choice-modal').style.display = 'none';
+  document.getElementById('victory-modal').style.display = 'none';
+  
+  // 进入新的轮回
+  cycle++;
+  wave = 1;
+  
+  // 重置资源但保留奖励效果
+  gold = GAME_CONFIG.initial.gold;
+  goldEl.textContent = gold;
+  diamonds = GAME_CONFIG.initial.diamonds;
+  diamondsEl.textContent = diamonds;
+  waveEl.textContent = `${wave}/${GAME_CONFIG.initial.maxWave} (轮回${cycle})`;
+  
+  // 清空所有炮台
+  towers.length = 0;
+  
+  // 显示游戏控制按钮
+  document.getElementById('controls').style.display = 'flex';
+  document.getElementById('top-right-buttons').style.display = 'flex';
+  
+  console.log(`第${cycle-1}轮完成！进入第${cycle}轮第${wave}波`);
+  drawGrid();
+}
+
+// 修改原有的胜利处理逻辑
+if (bossMode && monsters.length === 0) {
+  bossMode = false;
+  document.getElementById('victory-modal').style.display = 'flex';
+  
+  setTimeout(() => {
+    document.getElementById('victory-modal').style.display = 'none';
+    
+    if (wave === GAME_CONFIG.initial.maxWave) {
+      // 每轮最后一波结束时显示选择奖励模态框
+      setTimeout(() => {
+        document.getElementById('wave5-choice-modal').style.display = 'block';
+        // 动态显示血量数值
+        const hpButton = document.querySelector('#wave5-choice-modal button:first-child div:last-child');
+        const currentHP = maxPlayerHP;
+        const newHP = currentHP + 50;
+        hpButton.textContent = `+50血量 (${currentHP} → ${newHP})`;
+        console.log(`第${cycle}轮第${wave}波完成！显示奖励选择`);
+      }, 1500);
+    } else {
+      // 其他波次正常处理
+      document.getElementById('controls').style.display = 'flex';
+      document.getElementById('top-right-buttons').style.display = 'flex';
+      document.getElementById('challenge-btn').style.display = 'none';
+      
+      wave++;
+      waveEl.textContent = `${wave}/${GAME_CONFIG.initial.maxWave} (轮回${cycle})`;
+      console.log(`第${cycle}轮第${wave-1}波完成！当前波次：${wave}/${GAME_CONFIG.initial.maxWave}`);
+    }
+    
+    drawGrid();
+  }, 2500);
+}
 </script>
 
 <div id="dice-info-box" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);padding:30px 40px;border-radius:10px;border:2px solid #888;color:white;font-size:18px;z-index:2000;text-align:center;">
-  <div style="margin-bottom:20px;font-size:20px;font-weight:bold;">骰子英雄概率</div>
+  <div style="margin-bottom:20px;font-size:20px;font-weight:bold;">基础操作</div>
+  <div style="margin-left:5px;line-height:2;">
+    • 点击不同骰子按钮进行移动<br>
+    • 收集金币和钻石资源<br>
+    • 获得和升级英雄<br>
+    • 在BOSS战中保护核心区域
+  </div>
   <div>普通骰子英雄概率：<strong>10%</strong></div>
-  <div>精英骰子英雄概率：<strong>10%</strong></div>
   <div>万能骰子英雄概率：<strong>60%</strong></div>
   <button onclick="document.getElementById('dice-info-box').style.display='none'" style="margin-top:20px;padding:8px 16px;background:#444;border:1px solid #888;color:white;border-radius:5px;cursor:pointer;">关闭</button>
 </div>

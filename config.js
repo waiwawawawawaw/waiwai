@@ -6,14 +6,15 @@ const GAME_CONFIG = {
         playerHP: 100,
         maxPlayerHP: 100,
         wave: 1,
-        maxWave: 5
+        maxWave: 5,  // 每轮5波
+        cycle: 1     // 初始轮回次数
     },
 
     // 骰子价格配置
     diceCost: {
         normal: 100,
         elite: 150,
-        universal: 300
+        universal: 200
     },
 
     // 骰子触发概率配置
@@ -52,18 +53,31 @@ const GAME_CONFIG = {
         bulletSpeed: 12     // 子弹速度
     },
 
+    // 轮回配置
+    cycle: {
+        monsterHPMultiplier: 1.2,  // 每轮怪物血量倍率
+        bossHPMultiplier: 1.5,     // 每轮BOSS血量倍率
+        rewardInterval: 5          // 每5波给一次奖励
+    },
+
     // 怪物配置
     monster: {
         normal: {
-            hp: 5,
+            baseHP: 6,    // 基础血量，会随轮回倍率增加
             size: 12,
             reward: 20    // 击杀普通怪物金币奖励
         },
         boss: {
-            hp: 100,
             size: 20,
             reward: 100,  // 击杀BOSS金币奖励
-            damageToPlayer: 5  // BOSS对玩家造成的伤害
+            damageToPlayer: 5,  // BOSS对玩家造成的伤害
+            // 每波BOSS的基础血量配置（会随轮回倍率增加）
+            baseWaveHP: {
+                2: 100,
+                3: 150,
+                4: 200,
+                5: 250
+            }
         }
     },
 
@@ -78,16 +92,20 @@ const GAME_CONFIG = {
             bossCount: 1
         },
         3: {
-            normalCount: 6,
+            normalCount: 7,
             bossCount: 1
         },
         4: {
-            normalCount: 6,
+            normalCount: 7,
             bossCount: 2
         },
         5: {
-            normalCount: 6,
-            bossCount: 2
+            normalCount: 7,
+            bossCount: 3
+        },
+        6: {
+            normalCount: 8,
+            bossCount: 3
         }
     },
 
@@ -107,7 +125,7 @@ const GAME_CONFIG = {
         moveStepDelay: 300,     // 移动步骤延迟
         victoryModalDelay: 2500, // 胜利模态框显示时间
         upgradeTipDuration: 1000,// 升级提示显示时间
-        lightningInterval: 2000, // 雷电攻击间隔
+        lightningInterval: 1500, // 雷电攻击间隔
         damageNumberDuration: 1000 // 伤害数字显示时间
     },
 
@@ -116,6 +134,6 @@ const GAME_CONFIG = {
         maxCharges: 5,          // 最大充能次数
         normalKillPercent: 0.15, // 未击中时随机击杀怪物百分比
         bossDamage: 5,          // 对BOSS造成的伤害
-        size: 100                // 雷电效果大小
+        size: 200               // 雷电效果大小
     }
 }; 
