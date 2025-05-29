@@ -13,7 +13,6 @@ const GAME_CONFIG = {
     // 骰子价格配置
     diceCost: {
         normal: 100,
-        elite: 150,
         universal: 200
     },
 
@@ -55,7 +54,7 @@ const GAME_CONFIG = {
 
     // 轮回配置
     cycle: {
-        monsterHPMultiplier: 1.2,  // 每轮怪物血量倍率
+        monsterHPMultiplier: 1.5,  // 每轮怪物血量倍率
         bossHPMultiplier: 1.5,     // 每轮BOSS血量倍率
         rewardInterval: 5          // 每5波给一次奖励
     },
@@ -63,13 +62,19 @@ const GAME_CONFIG = {
     // 怪物配置
     monster: {
         normal: {
-            baseHP: 6,    // 基础血量，会随轮回倍率增加
+            baseHP: 10,    // 基础血量，会随轮回倍率增加
             size: 12,
             reward: 20    // 击杀普通怪物金币奖励
         },
         boss: {
-            size: 20,
-            reward: 100,  // 击杀BOSS金币奖励
+            baseHP: 100,
+            size: 24,
+            waveHP: {
+                2: 150,
+                3: 200,
+                4: 250,
+                5: 300
+            },
             damageToPlayer: 5,  // BOSS对玩家造成的伤害
             // 每波BOSS的基础血量配置（会随轮回倍率增加）
             baseWaveHP: {
